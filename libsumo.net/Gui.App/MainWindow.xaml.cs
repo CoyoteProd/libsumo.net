@@ -1,4 +1,5 @@
-﻿using LibSumoUni;
+﻿using LibSumo.Net;
+using LibSumo.Net.lib.network;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +15,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
+
+
 namespace Gui.App
 {
     /// <summary>
@@ -21,6 +24,12 @@ namespace Gui.App
     /// </summary>
     public partial class MainWindow : Window
     {
+        public static int DEFAULT_TURN_DEGREE = 25;
+        public static int DEFAULT_SPEED = 50;
+        private static readonly log4net.ILog LOGGER = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
+        DroneController droneController;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -28,16 +37,16 @@ namespace Gui.App
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            DroneController dr = new DroneController("192.168.2.1", new HandshakeRequest("PC", "PC"));
-            dr.evtImageReady +=dr_evtImageReady;
+            DroneConnection droneConnection = new WirelessLanDroneConnection("192.168.2.1", 44444, "pc");
+            droneController = new DroneController(droneConnection);
+            
+            droneController.addBatteryListener(b=>LOGGER.Info("BatteryState: " + b));
+            droneController.addCriticalBatteryListener(b=>LOGGER.Info("Critical-BatteryState: " + b));
+            droneController.addPCMDListener(b=>LOGGER.Info("PCMD: " + b));
+            droneController.addOutdoorSpeedListener(b=>LOGGER.Info("Speed: " + b));
         }
 
-        void dr_evtImageReady(object sender, EventArgs e)
-        {
-            // display new image
-            ImageSourceConverter c = new ImageSourceConverter();
-            imageDrone.Source = (ImageSource)c.ConvertFrom(((LibSumoUni.DroneController.ImageReadyEventArgs)e).img);
-        }
+       
         
     }
 }

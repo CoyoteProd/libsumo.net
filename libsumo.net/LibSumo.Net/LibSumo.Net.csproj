@@ -50,29 +50,55 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Command\Acknowledge.cs" />
+    <Compile Include="Command\animation\Metronome.cs" />
+    <Compile Include="Command\animation\Ondulation.cs" />
+    <Compile Include="Command\animation\Slalom.cs" />
+    <Compile Include="Command\animation\SlowShake.cs" />
+    <Compile Include="Command\animation\Spin.cs" />
+    <Compile Include="Command\animation\SpinJump.cs" />
+    <Compile Include="Command\animation\SpinToPosture.cs" />
+    <Compile Include="Command\animation\Spiral.cs" />
+    <Compile Include="Command\animation\StopAnimation.cs" />
+    <Compile Include="Command\animation\Tap.cs" />
+    <Compile Include="Command\Interfaces\CommonCommand.cs" />
+    <Compile Include="Command\Common\StringHelperClass.cs" />
+    <Compile Include="Command\Interfaces\Command.cs" />
+    <Compile Include="Command\CommandException.cs" />
+    <Compile Include="Command\movement\Jump.cs" />
+    <Compile Include="Command\movement\JumpMotorProblemChanged.cs" />
+    <Compile Include="Command\movement\Pcmd.cs" />
+    <Compile Include="Command\CommandReader.cs" />
+    <Compile Include="Command\CommandKey.cs" />
+    <Compile Include="Command\Common\CurrentDate.cs" />
+    <Compile Include="Command\Common\CurrentTime.cs" />
+    <Compile Include="Command\Common\Disconnect.cs" />
+    <Compile Include="Command\Common\NullTerminatedString.cs" />
+    <Compile Include="Command\Common\Pong.cs" />
+    <Compile Include="Command\ChannelType.cs" />
+    <Compile Include="Command\FrameType.cs" />
+    <Compile Include="Command\Multimedia\AudioTheme.cs" />
+    <Compile Include="Command\Multimedia\VideoStreaming.cs" />
+    <Compile Include="Command\Multimedia\Volume.cs" />
     <Compile Include="DroneController.cs" />
-    <Compile Include="Network\CommandReader.cs" />
-    <Compile Include="Network\Command\CommandKey.cs" />
-    <Compile Include="Network\Command\CurrentDate.cs" />
-    <Compile Include="Network\Command\CurrentTime.cs" />
-    <Compile Include="Network\Command\Disconnect.cs" />
-    <Compile Include="Network\Command\ICommand.cs" />
-    <Compile Include="Network\Command\Jump.cs" />
-    <Compile Include="Network\Command\NullTerminatedString.cs" />
-    <Compile Include="Network\Command\Pcmd.cs" />
-    <Compile Include="Network\Command\Pong.cs" />
-    <Compile Include="Network\Command\Types\BatteryState.cs" />
-    <Compile Include="Network\Command\Types\ChannelType.cs" />
-    <Compile Include="Network\Command\Types\FrameType.cs" />
-    <Compile Include="Network\Command\VideoStreaming.cs" />
-    <Compile Include="Network\HandshakeAnswer.cs" />
-    <Compile Include="Network\HandshakeRequest.cs" />
-    <Compile Include="Network\TcpHandshake.cs" />
+    <Compile Include="listner\BatteryListener.cs" />
+    <Compile Include="listner\BatteryState.cs" />
+    <Compile Include="listner\CriticalBatteryListener.cs" />
+    <Compile Include="listner\EventListener.cs" />
+    <Compile Include="listner\OutdoorSpeedListener.cs" />
+    <Compile Include="listner\PCMDListener.cs" />
+    <Compile Include="listner\VideoListener.cs" />
+    <Compile Include="Network\DroneConnection.cs" />
+    <Compile Include="Network\Handshake\HandshakeResponse.cs" />
+    <Compile Include="Network\Handshake\HandshakeRequest.cs" />
+    <Compile Include="Network\Handshake\TcpHandshake.cs" />
+    <Compile Include="Network\WirelessLanDroneConnection.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
