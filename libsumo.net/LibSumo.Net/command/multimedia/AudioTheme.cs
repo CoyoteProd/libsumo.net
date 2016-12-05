@@ -1,4 +1,5 @@
-﻿namespace LibSumo.Net.lib.command.multimedia
+﻿using LibSumo.Net.Network;
+namespace LibSumo.Net.lib.command.multimedia
 {
 
 
@@ -11,7 +12,7 @@
 	/// @author  Alexander Bischof
 	/// @author  Tobias Schneider
 	/// </summary>
-	public  class AudioTheme : Command
+	public  class AudioTheme : iCommand
 	{
 
 		public enum Theme
@@ -24,6 +25,7 @@
 		}
 
 		private readonly CommandKey commandKey = CommandKey.commandKey(3, 12, 1);
+        private readonly PacketType packetType = PacketType.DATA_WITH_ACK;
 		private readonly Theme theme;
 
 		protected internal AudioTheme(AudioTheme.Theme theme)
@@ -39,21 +41,18 @@
 		}
 
 
-		new public  byte[] getBytes(int counter)
+		public  byte[] getBytes(int counter)
 		{
 
-			return new byte[] {(byte) FrameType.ARNETWORKAL_FRAME_TYPE_DATA_WITH_ACK, ChannelType.JUMPINGSUMO_CONTROLLER_TO_DEVICE_ACK_ID.Id, (byte) counter, 15, 0, 0, 0, commandKey.ProjectId, commandKey.ClazzId, commandKey.CommandId, 0, (byte) theme, 0, 0, 0};
+            return new byte[] { (byte)packetType, ChannelType.JUMPINGSUMO_CONTROLLER_TO_DEVICE_ACK_ID.Id, (byte)counter, 15, 0, 0, 0, commandKey.ProjectId, commandKey.ClazzId, commandKey.CommandId, 0, (byte)theme, 0, 0, 0 };
 		}
 
 
-		new public Acknowledge Acknowledge
-		{
-			get
-			{
-    
-				return Acknowledge.AckBefore;
-			}
-		}
+        public PacketType getPacketType()
+        {
+            return packetType;
+        }
+
 
 
 		public override string ToString()

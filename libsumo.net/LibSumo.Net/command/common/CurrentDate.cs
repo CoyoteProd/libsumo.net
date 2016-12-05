@@ -1,4 +1,6 @@
-﻿using System;
+﻿using LibSumo.Net.Command.Interfaces;
+using LibSumo.Net.Network;
+using System;
 using System.IO;
 namespace LibSumo.Net.lib.command.common
 {
@@ -7,11 +9,11 @@ namespace LibSumo.Net.lib.command.common
 	/// @author  Alexander Bischof
 	/// @author  Tobias Schneider
 	/// </summary>
-	public  class CurrentDate : CommonCommand
+    public class CurrentDate : iCommonCommand
 	{
 
 		private readonly CommandKey commandKey = CommandKey.commandKey(0, 4, 0);
-		//private readonly Clock clock;
+        private readonly PacketType packetType = PacketType.DATA_WITH_ACK;
 
 		protected internal CurrentDate()
 		{
@@ -26,10 +28,10 @@ namespace LibSumo.Net.lib.command.common
 		}
 
 
-		new public byte[] getBytes(int counter)
+		public byte[] getBytes(int sequenceNumber)
 		{
 
-			byte[] header = new byte[] {(byte) FrameType.ARNETWORKAL_FRAME_TYPE_DATA_WITH_ACK, ChannelType.JUMPINGSUMO_CONTROLLER_TO_DEVICE_ACK_ID.Id, (byte) counter, 15, 0, 0, 0, commandKey.ProjectId, commandKey.ClazzId, commandKey.CommandId, 0};
+            byte[] header = new byte[] { (byte)packetType, ChannelType.JUMPINGSUMO_CONTROLLER_TO_DEVICE_ACK_ID.Id, (byte)sequenceNumber, 15, 0, 0, 0, commandKey.ProjectId, commandKey.ClazzId, commandKey.CommandId, 0 };
 
 			try
 			{
@@ -53,14 +55,10 @@ namespace LibSumo.Net.lib.command.common
 		}
 
 
-		new public Acknowledge Acknowledge
-		{
-			get
-			{
-    
-				return Acknowledge.AckAfter;
-			}
-		}
+        public PacketType getPacketType()
+        {
+            return packetType;
+        }
 
 
 		public override string ToString()
@@ -68,13 +66,7 @@ namespace LibSumo.Net.lib.command.common
 
             return "CurrentDate{" + DateTime.Now.ToString("yyyy-MM-dd") + '}';
 		}
-
-
-		public new int waitingTime()
-		{
-
-			return 150;
-		}
+		
 	}
 
 }

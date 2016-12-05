@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LibSumo.Net.Network;
+using System;
 namespace LibSumo.Net.lib.command
 {
 
@@ -8,7 +9,7 @@ namespace LibSumo.Net.lib.command
 	/// @author  Alexander Bischof
 	/// @author  Tobias Schneider
 	/// </summary>
-	public class Command
+	public interface iCommand
 	{
         /// <summary>
         /// Returns the byte package of the specific command.
@@ -18,27 +19,30 @@ namespace LibSumo.Net.lib.command
         /// <param name="counter">
         /// </param>
         /// <returns>  byte package of command </returns>
-        public byte[] getBytes(int counter)
-        {
-            throw (new Exception("be not used"));
-        }
+        byte[] getBytes(int sequenceNumber);
+        
+        PacketType getPacketType();
 
-
-        /// <summary>
-        /// TODO Describe why this is needed.
-        /// 
-        /// @return
-        /// </summary>
-        public Acknowledge Acknowledge { get; set; }
+        
 		/// <summary>
 		/// Define the time to wait after a command was send to the drone to wait until the next command should be fired.
 		/// </summary>
 		/// <returns>  time to wait until send next command to the drone </returns>
         /// 
-		public int waitingTime()
-		{	
-			return 500;
-		}
+        //int waitingTime();
+		//{	
+//			return 500;
+		//}
 	}
+
+
+    public static class CommandExtensions
+    {
+        public static int waitingTime(this iCommand cmd)
+        {
+            if (cmd.waitingTime() == 0) return 100;
+            else return cmd.waitingTime();
+        }
+    }
 
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LibSumo.Net.Network;
+using System;
 namespace LibSumo.Net.lib.command.movement
 {
 
@@ -17,14 +18,18 @@ namespace LibSumo.Net.lib.command.movement
 	/// @author  Alexander Bischof
 	/// @author  Tobias Schneider
 	/// </summary>
-	public class Pcmd : Command
+	public class Pcmd : iCommand
 	{
 
 		private readonly CommandKey commandKey = CommandKey.commandKey(3, 0, 0);
-		private readonly byte speed;
-		private readonly byte turn;
-//JAVA TO C# CONVERTER NOTE: Fields cannot have the same name as methods:
+        private byte speed { get; set; }
+        private byte turn { get; set; }
+        private byte degrees { get; set; }
+
+        
 		private readonly int? waitingTime_Renamed;
+        private PacketType packetType = PacketType.DATA; //FrameType.ARNETWORKAL_FRAME_TYPE_DATA;
+
 
 		protected internal Pcmd(int speed, int degrees, int? waitingTime)
 		{
@@ -88,24 +93,24 @@ namespace LibSumo.Net.lib.command.movement
 		}
 
 
-		new public byte[] getBytes(int counter)
+      
+
+
+		public byte[] getBytes(int counter)
 		{
 
 			byte touchscreen = 1;
 
-            return new byte[] { (byte)FrameType.ARNETWORKAL_FRAME_TYPE_DATA, ChannelType.JUMPINGSUMO_CONTROLLER_TO_DEVICE_NONACK_ID.Id, (byte)counter, 14, 0, 0, 0, commandKey.ProjectId, commandKey.ClazzId, commandKey.CommandId, 0, touchscreen, speed, turn };
+            return new byte[] { (byte)packetType, ChannelType.JUMPINGSUMO_CONTROLLER_TO_DEVICE_NONACK_ID.Id, (byte)counter, 
+                                14, 0, 0, 0, commandKey.ProjectId, commandKey.ClazzId, commandKey.CommandId, 0, 
+                                touchscreen, speed, turn };
 		}
-
-
-		new public Acknowledge Acknowledge
-		{
-			get
-			{
-    
-				return Acknowledge.NoAckBefore;
-			}
-		}
-
+        
+        public PacketType getPacketType()
+        {
+            return packetType;
+        }
+        	
 
 		public override string ToString()
 		{
@@ -114,7 +119,7 @@ namespace LibSumo.Net.lib.command.movement
 		}
 
 
-		public new int waitingTime()
+		public int waitingTime()
 		{
 
 			if (waitingTime_Renamed == null)
@@ -124,6 +129,11 @@ namespace LibSumo.Net.lib.command.movement
 
 			return this.waitingTime_Renamed.Value;
 		}
+
+        public iCommand clone(int waitingTime)
+        {
+            return new Pcmd(speed, degrees, waitingTime);
+        }
 	}
 
 }

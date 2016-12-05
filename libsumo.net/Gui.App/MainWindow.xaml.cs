@@ -37,7 +37,7 @@ namespace Gui.App
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            DroneConnection droneConnection = new WirelessLanDroneConnection("192.168.2.1", 44444, "pc");
+            WirelessLanDroneConnection droneConnection = new WirelessLanDroneConnection("192.168.2.1", 44444, "com.example.arsdkap");
             droneController = new DroneController(droneConnection);
             
             droneController.addBatteryListener(b=>LOGGER.Info("BatteryState: " + b));

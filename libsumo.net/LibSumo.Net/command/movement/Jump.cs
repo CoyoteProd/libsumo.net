@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LibSumo.Net.Network;
+using System;
 
 namespace LibSumo.Net.lib.command.movement
 {
@@ -9,7 +10,7 @@ namespace LibSumo.Net.lib.command.movement
 	/// @author  Alexander Bischof
 	/// @author  Tobias Schneider
 	/// </summary>
-	public  class Jump : Command
+	public  class Jump : iCommand
 	{
 
 		public enum Type
@@ -19,6 +20,7 @@ namespace LibSumo.Net.lib.command.movement
 		}
 
 		private readonly CommandKey commandKey = CommandKey.commandKey(3, 2, 3);
+        private readonly PacketType packetType = PacketType.DATA_WITH_ACK;
 		private readonly Type type;
 
 		protected internal Jump(Type type)
@@ -34,21 +36,17 @@ namespace LibSumo.Net.lib.command.movement
 		}
 
 
-		new public byte[] getBytes(int counter)
+		public byte[] getBytes(int counter)
 		{
 
-			return new byte[] {(byte) FrameType.ARNETWORKAL_FRAME_TYPE_DATA_WITH_ACK, ChannelType.JUMPINGSUMO_CONTROLLER_TO_DEVICE_ACK_ID.Id, (byte) counter, 15, 0, 0, 0, commandKey.ProjectId, commandKey.ClazzId, commandKey.CommandId, 0, (byte) type, 0, 0, 0};
+            return new byte[] { (byte)packetType, ChannelType.JUMPINGSUMO_CONTROLLER_TO_DEVICE_ACK_ID.Id, (byte)counter, 15, 0, 0, 0, commandKey.ProjectId, commandKey.ClazzId, commandKey.CommandId, 0, (byte)type, 0, 0, 0 };
 		}
 
 
-		new public Acknowledge Acknowledge
-		{
-			get
-			{
-    
-				return Acknowledge.AckBefore;
-			}
-		}
+        public PacketType getPacketType()
+        {
+            return packetType;
+        }
 
 
 		public override string ToString()
@@ -58,7 +56,7 @@ namespace LibSumo.Net.lib.command.movement
 		}
 
 
-		public new int waitingTime()
+		public int waitingTime()
 		{
 
 			return 5000;

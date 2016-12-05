@@ -1,24 +1,23 @@
 ﻿namespace LibSumo.Net.lib.network
 {
 
-	using Command = LibSumo.Net.lib.command.Command;
-	using EventListener = LibSumo.Net.lib.listener.EventListener;
+    using LibSumo.Net.lib.command;
+    //using Command = LibSumo.Net.lib.command.Command;
+    using EventListener = LibSumo.Net.lib.listener.EventListener;
 
 
 	/// <summary>
 	/// @author  Tobias Schneider
 	/// </summary>
-	public interface DroneConnection
+	public interface iDroneConnection
 	{
 
 		/// <summary>
 		/// Connect with the drone with the constructor injected credentials.
 		/// </summary>
 		/// <exception cref="IOException"> </exception>
-//JAVA TO C# CONVERTER WARNING: Method 'throws' clauses are not available in .NET:
-//ORIGINAL LINE: void connect() throws java.io.IOException;
 		void connect();
-
+        void disconnect();
 
 		/// <summary>
 		/// Sends the given <seealso cref="Command"/> to the drone.
@@ -26,13 +25,11 @@
 		/// <param name="command">  to send to drone
 		/// </param>
 		/// <exception cref="IOException"> </exception>
-//JAVA TO C# CONVERTER WARNING: Method 'throws' clauses are not available in .NET:
-//ORIGINAL LINE: void sendCommand(LibSumo.Net.lib.command.Command command) throws java.io.IOException;
-		void sendCommand(Command command);
+		void sendCommand(iCommand command);
 
 
 		/// <summary>
-		/// Register the given <seealso cref="EventListener"/> to the <seealso cref="DroneConnection"/>.
+		/// Register the given <seealso cref="EventListener"/> to the <seealso cref="iDroneConnection"/>.
 		/// </summary>
 		/// <param name="eventListener">  with the capsuled functionality </param>
 		void addEventListener(EventListener eventListener);

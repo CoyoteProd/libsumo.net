@@ -6,7 +6,7 @@
 	/// <summary>
 	/// @author  Alexander Bischof
 	/// </summary>
-	public class Disconnect : CommonCommand
+	public class Disconnect: iCommand
 	{
 
 		private readonly CommandKey commandKey = CommandKey.commandKey(0, 0, 0);

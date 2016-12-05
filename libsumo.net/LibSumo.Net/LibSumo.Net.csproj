@@ -61,10 +61,10 @@
     <Compile Include="Command\animation\Spiral.cs" />
     <Compile Include="Command\animation\StopAnimation.cs" />
     <Compile Include="Command\animation\Tap.cs" />
-    <Compile Include="Command\Interfaces\CommonCommand.cs" />
     <Compile Include="Command\Common\StringHelperClass.cs" />
-    <Compile Include="Command\Interfaces\Command.cs" />
+    <Compile Include="Command\Interfaces\iCommand.cs" />
     <Compile Include="Command\CommandException.cs" />
+    <Compile Include="Command\Interfaces\iCommonCommand.cs" />
     <Compile Include="Command\movement\Jump.cs" />
     <Compile Include="Command\movement\JumpMotorProblemChanged.cs" />
     <Compile Include="Command\movement\Pcmd.cs" />
@@ -72,7 +72,6 @@
     <Compile Include="Command\CommandKey.cs" />
     <Compile Include="Command\Common\CurrentDate.cs" />
     <Compile Include="Command\Common\CurrentTime.cs" />
-    <Compile Include="Command\Common\Disconnect.cs" />
     <Compile Include="Command\Common\NullTerminatedString.cs" />
     <Compile Include="Command\Common\Pong.cs" />
     <Compile Include="Command\ChannelType.cs" />
@@ -88,7 +87,7 @@
     <Compile Include="listner\OutdoorSpeedListener.cs" />
     <Compile Include="listner\PCMDListener.cs" />
     <Compile Include="listner\VideoListener.cs" />
-    <Compile Include="Network\DroneConnection.cs" />
+    <Compile Include="Command\Interfaces\iDroneConnection.cs" />
     <Compile Include="Network\Handshake\HandshakeResponse.cs" />
     <Compile Include="Network\Handshake\HandshakeRequest.cs" />
     <Compile Include="Network\Handshake\TcpHandshakeService.cs" />

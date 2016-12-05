@@ -1,4 +1,5 @@
-﻿namespace LibSumo.Net.lib.command.animation
+﻿using LibSumo.Net.Network;
+namespace LibSumo.Net.lib.command.animation
 {
 
 
@@ -7,12 +8,13 @@
 	/// @author  Alexander Bischof
 	/// @author  Tobias Schneider
 	/// </summary>
-	public class Spin : Command
+	public class Spin : iCommand
 	{
 
 		private readonly CommandKey commandKey = CommandKey.commandKey(3, 2, 4);
+        private readonly PacketType packetType = PacketType.DATA_WITH_ACK;
 
-		protected internal Spin()
+		private Spin()
 		{
 
 			// use fabric method
@@ -25,22 +27,12 @@
 		}
 
 
-		public new byte[] getBytes(int counter)
+		public byte[] getBytes(int counter)
 		{
 
-			return new byte[] {(byte) FrameType.ARNETWORKAL_FRAME_TYPE_DATA_WITH_ACK, ChannelType.JUMPINGSUMO_CONTROLLER_TO_DEVICE_ACK_ID.Id, (byte) counter, 15, 0, 0, 0, commandKey.ProjectId, commandKey.ClazzId, commandKey.CommandId, 0, 1, 0, 0, 0};
+            return new byte[] { (byte)packetType, ChannelType.JUMPINGSUMO_CONTROLLER_TO_DEVICE_ACK_ID.Id, (byte)counter, 15, 0, 0, 0, commandKey.ProjectId, commandKey.ClazzId, commandKey.CommandId, 0, 1, 0, 0, 0 };
 		}
-
-
-        public new Acknowledge Acknowledge
-		{
-			get
-			{
-    
-				return Acknowledge.AckBefore;
-			}
-		}
-
+                     
 
 		public override string ToString()
 		{
@@ -48,8 +40,12 @@
 			return "Spin";
 		}
 
+        public PacketType getPacketType()
+        {
+            return packetType;
+        }
 
-        public new int waitingTime()
+        public int waitingTime()
 		{
 
 			return 3000;

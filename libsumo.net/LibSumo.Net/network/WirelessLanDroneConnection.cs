@@ -4,9 +4,9 @@ using System.Threading;
 namespace LibSumo.Net.lib.network
 {
 
-	using Command = LibSumo.Net.lib.command.Command;
+	//using Command = LibSumo.Net.lib.command.Command;
 	using CommandException = LibSumo.Net.lib.command.CommandException;
-	using CommonCommand = LibSumo.Net.lib.command.common.CommonCommand;
+	//using CommonCommand = LibSumo.Net.lib.command.common.CommonCommand;
 	using CurrentDate = LibSumo.Net.lib.command.common.CurrentDate;
 	using CurrentTime = LibSumo.Net.lib.command.common.CurrentTime;
 	using Pong = LibSumo.Net.lib.command.common.Pong;
@@ -22,6 +22,8 @@ namespace LibSumo.Net.lib.network
     using System.Net;
     using LibSumo.Net.lib.network.handshake;
     using LibSumo.Net.Network;
+    using LibSumo.Net.lib.command.movement;
+    using LibSumo.Net.Command.Interfaces;
 
 
 
@@ -33,28 +35,34 @@ namespace LibSumo.Net.lib.network
 	/// 
 	/// @author  Tobias Schneider
 	/// </summary>
-	public class WirelessLanDroneConnection : DroneConnection
+	public class WirelessLanDroneConnection : iDroneConnection
 	{
 	
 		private const string CONTROLLER_TYPE = "_arsdk-0902._udp";
         
         private static readonly log4net.ILog LOGGER = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        private readonly BlockingCollection<Command> commonCommandQueue = new BlockingCollection<Command>(25);
-        private readonly BlockingCollection<Command> commandQueue = new BlockingCollection<Command>(25);
+        private readonly BlockingCollection<iCommand> commonCommandQueue = new BlockingCollection<iCommand>(25);
+        private readonly BlockingCollection<iCommand> commandQueue = new BlockingCollection<iCommand>(25);
 		private readonly List<EventListener> eventListeners = new List<EventListener>();
 
 		private readonly string deviceIp;
 		private readonly int tcpPort;
 		private readonly string wirelessLanName;
-		//private readonly Clock clock;
+        
+        private bool listenToResponse = true;
+        private bool sendCommands = true;
 
 		private int devicePort;
-		private byte noAckCounter = 0;
-		private byte ackCounter = 0;
+		//private byte noAckCounter = 0;
+		//private byte ackCounter = 0;
 
         private IPEndPoint SumoRemote;
         private byte[] nextSequenceNumbers;
+
+        private int maxWaitingTime = 100; // at least every x ms a command is sent to the drone
+
+
 
 		public WirelessLanDroneConnection(string deviceIp, int tcpPort, string wirelessLanName)
 		{
@@ -71,11 +79,11 @@ namespace LibSumo.Net.lib.network
 			
 		}
 
-		public virtual void connect()
+		public void connect()
 		{
 
 			LOGGER.Info("Connecting to drone...");
-
+            listenToResponse = true;
 			//HandshakeRequest handshakeRequest = new HandshakeRequest(wirelessLanName, CONTROLLER_TYPE);
             //TcpHandshake DeviceShake = new TcpHandshake(deviceIp, tcpPort);
             //HandshakeResponse handshakeResponse = DeviceShake.shake(handshakeRequest);
@@ -92,7 +100,7 @@ namespace LibSumo.Net.lib.network
 
             }
             catch (IOException e)
-            {
+            {                               
                 //throw new ConnectionException("Error while trying to connect to the drone - check your connection", e);
             }
 
@@ -102,23 +110,47 @@ namespace LibSumo.Net.lib.network
 			sendCommand(CurrentTime.currentTime());
 
 			runResponseHandler();
-			runConsumer(commandQueue);
-			runConsumer(commonCommandQueue);
+            runConsumer(commandQueue, true); // only run heartbeat here
+            runConsumer(commonCommandQueue, false); // don't use long running split commands here.
 		}
 
+        public void disconnect()
+        {
+            LOGGER.Debug("Disconnecting from drone...");
+            listenToResponse = false;
+            sendCommands = false;
+            LOGGER.Debug("Disconnected from drone");
+        }
 
-		public virtual void sendCommand(Command command)
+		public void sendCommand(iCommand command)
 		{
-
 			try
 			{
-				if (command is CommonCommand)
+                int waitingTime = command.waitingTime();
+				if (command is Pcmd)
 				{
-					commonCommandQueue.Add(command);
+                    LOGGER.Debug(String.Format("putting Pcmd's into queue {0} for time {1}", command, waitingTime));
+                    while (waitingTime > 0)
+                    { // generate enough Pcmds for the expected waiting time                      
+                        iCommand newCommand = ((Pcmd)command).clone((waitingTime > maxWaitingTime) ? maxWaitingTime : waitingTime);
+                        commonCommandQueue.Add(newCommand);
+                        waitingTime = waitingTime - maxWaitingTime;
+                    }
 				}
 				else
 				{
-					commandQueue.Add(command);
+					
+                    LOGGER.Debug(String.Format("putting command into queue {0}", command));
+                    if (command is iCommonCommand) 
+                    {
+                        //commonCommandQueue.offer(command);
+                        commonCommandQueue.Add(command);
+                    } else 
+                    {
+                        commandQueue.Add(command);
+                        //commandQueue.offer(command);
+                    }
+
 				}
 			}
 			catch (Exception e)
@@ -153,8 +185,8 @@ namespace LibSumo.Net.lib.network
 					{
 						LOGGER.Info(String.Format("Listing for response on port %s", devicePort));
 						int pingCounter = 0;
-						while (true)
-						{							                                                       
+						while (listenToResponse) 
+					    {							                                                       
 							byte[] data = udpClient.Receive(ref SumoRemote);;
 
 							if (data[1] == 126)
@@ -181,7 +213,7 @@ namespace LibSumo.Net.lib.network
 		}
 
 
-        private void runConsumer(BlockingCollection<Command> queue)
+        private void runConsumer(BlockingCollection<iCommand> queue, bool heartbeat)
 		{
 
 			LOGGER.Info("Creating a specific command queue consumer...");
@@ -192,16 +224,31 @@ namespace LibSumo.Net.lib.network
 				{
                     using (var sumoSocket = new UdpClient())
 					{
-						while (true)
+                        while (sendCommands)
 						{
 							try
 							{
-								Command command = queue.Take();
-                                int cnt = changeAndGetCounter(command);
-								byte[] packet = command.getBytes(cnt);
-								sumoSocket.Send(packet, packet.Length, SumoRemote);
-								LOGGER.Info(String.Format("Sending command: {0}", command));
-								Thread.Sleep(command.waitingTime());
+								iCommand command = queue.Take();
+                                if (command != null)
+                                {
+                                    int cnt = getNextSequenceNumber(command);
+                                    byte[] packet = command.getBytes(cnt);
+                                    sumoSocket.Send(packet, packet.Length, SumoRemote);
+                                    LOGGER.Info(String.Format("Sending command: {0}", command));
+                                    Thread.Sleep(command.waitingTime());
+                                }
+                                else  // send "null" PCmd (0,0) =  ("go by 0 speed") when queue is empty
+                                {
+                                    if (heartbeat)
+                                    {
+                                        Pcmd nullCommand = Pcmd.pcmd(0, 0, maxWaitingTime);
+                                        byte[] nullMovePacket = nullCommand.getBytes(getNextSequenceNumber(nullCommand));
+                                        //LOGGER.Debug("empty queue,  sending null command '{}' with packet {}", nullCommand, convertAndCutPacket(nullMovePacket, false));
+                                        sumoSocket.Send(nullMovePacket, nullMovePacket.Length, SumoRemote);
+                                    }
+                                    Thread.Sleep(maxWaitingTime);
+                                    //MILLISECONDS.sleep(maxWaitingTime);
+                                }
 							}
 							catch (Exception e)
 							{
@@ -217,33 +264,19 @@ namespace LibSumo.Net.lib.network
 			}).Start();
 		}
 
+        private int getNextSequenceNumber(iCommand command) 
+        {
 
-		private int changeAndGetCounter(Command command)
-		{
+            byte packetTypeId = (byte)command.getPacketType();    
+            byte nextSequenceNumber = nextSequenceNumbers[packetTypeId];
+            nextSequenceNumbers[packetTypeId] = (byte) (nextSequenceNumber + 1);
+    
+            return nextSequenceNumber;
+        }
 
-			int counter = 0;
+     
 
-			switch (command.Acknowledge)
-			{
-				case Acknowledge.AckBefore:
-					counter = ++ackCounter;
-					break;
-
-                case Acknowledge.AckAfter:
-					counter = ackCounter++;
-					break;
-
-                case Acknowledge.NoAckBefore:
-					counter = ++noAckCounter;
-					break;
-
-                case Acknowledge.None:
-				default:
-					break;
-			}
-
-			return counter;
-		}
+        	
 	}
 
 }

@@ -18,9 +18,9 @@ namespace LibSumo.Net
     {
         private static readonly log4net.ILog LOGGER = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
-        private DroneConnection droneConnection;
+        private iDroneConnection droneConnection;
 
-        public DroneController(DroneConnection droneConnection)
+        public DroneController(iDroneConnection droneConnection)
         {
 
             LOGGER.Info("Creating DroneController");
@@ -31,7 +31,7 @@ namespace LibSumo.Net
 
         public void close()
         {
-            droneConnection.sendCommand(Disconnect.disconnect());
+            droneConnection.disconnect();
         }
 
         /*
@@ -241,7 +241,7 @@ namespace LibSumo.Net
         public class AudioController
         {
             private DroneController droneController;
-            private DroneConnection droneConnection;
+            private iDroneConnection droneConnection;
 
             public AudioController(DroneController droneController)
             {
@@ -287,7 +287,7 @@ namespace LibSumo.Net
         {
 
             private DroneController droneController;
-            private DroneConnection droneConnection;
+            private iDroneConnection droneConnection;
 
             public VideoController(DroneController droneController)
             {
