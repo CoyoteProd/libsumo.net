@@ -33,6 +33,7 @@ namespace Gui.App
         public MainWindow()
         {
             InitializeComponent();
+            LOGGER.Debug("Start");
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)

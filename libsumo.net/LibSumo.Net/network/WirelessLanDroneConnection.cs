@@ -10,7 +10,7 @@ namespace LibSumo.Net.lib.network
 	using CurrentDate = LibSumo.Net.lib.command.common.CurrentDate;
 	using CurrentTime = LibSumo.Net.lib.command.common.CurrentTime;
 	using Pong = LibSumo.Net.lib.command.common.Pong;
-	using EventListener = LibSumo.Net.lib.listener.EventListener;
+	using EventListener = LibSumo.Net.lib.listener.iEventListener;
 	using HandshakeRequest = LibSumo.Net.lib.network.handshake.HandshakeRequest;
 	using HandshakeResponse = LibSumo.Net.lib.network.handshake.HandshakeResponse;
 	using TcpHandshake = LibSumo.Net.lib.network.handshake.TcpHandshakeService;

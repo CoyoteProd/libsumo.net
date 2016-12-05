@@ -82,8 +82,8 @@
     <Compile Include="DroneController.cs" />
     <Compile Include="listner\BatteryListener.cs" />
     <Compile Include="listner\BatteryState.cs" />
-    <Compile Include="listner\CriticalBatteryListener.cs" />
-    <Compile Include="listner\EventListener.cs" />
+    <Compile Include="listner\CommonEventListener.cs" />
+    <Compile Include="listner\iEventListener.cs" />
     <Compile Include="listner\OutdoorSpeedListener.cs" />
     <Compile Include="listner\PCMDListener.cs" />
     <Compile Include="listner\VideoListener.cs" />

@@ -7,7 +7,7 @@ namespace LibSumo.Net.lib.listener
 	/// <summary>
 	/// @author  Tobias Schneider
 	/// </summary>
-	public class OutdoorSpeedListener : EventListener
+	public class OutdoorSpeedListener : iEventListener
 	{
 
 		private readonly Action<string> consumer;

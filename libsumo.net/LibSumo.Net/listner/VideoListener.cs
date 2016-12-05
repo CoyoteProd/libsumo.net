@@ -9,7 +9,7 @@ namespace LibSumo.Net.lib.listener
 	/// <summary>
 	/// @author  Tobias Schneider
 	/// </summary>
-	public class VideoListener : EventListener
+	public class VideoListener : iEventListener
 	{
 
 		private readonly System.IO.FileStream fileOutputStream;

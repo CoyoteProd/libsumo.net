@@ -40,8 +40,13 @@ namespace LibSumo.Net.lib.command
     {
         public static int waitingTime(this iCommand cmd)
         {
-            if (cmd.waitingTime() == 0) return 100;
-            else return cmd.waitingTime();
+            var property = cmd.GetType().GetProperty("waitingTime");
+            if (property!=null)
+            {
+                if (cmd.waitingTime() == 0) return 100;
+                else return cmd.waitingTime();
+            }else
+                return 100;
         }
     }
 

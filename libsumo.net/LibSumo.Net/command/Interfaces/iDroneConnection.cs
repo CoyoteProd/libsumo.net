@@ -3,7 +3,7 @@
 
     using LibSumo.Net.lib.command;
     //using Command = LibSumo.Net.lib.command.Command;
-    using EventListener = LibSumo.Net.lib.listener.EventListener;
+    using EventListener = LibSumo.Net.lib.listener.iEventListener;
 
 
 	/// <summary>

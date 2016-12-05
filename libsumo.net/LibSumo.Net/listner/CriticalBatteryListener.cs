@@ -6,7 +6,7 @@ namespace LibSumo.Net.lib.listener
 	/// <summary>
 	/// @author  Tobias Schneider
 	/// </summary>
-	public class CriticalBatteryListener : EventListener
+	public class CriticalBatteryListener : iEventListener
 	{
 
 		private readonly Action<BatteryState> consumer;

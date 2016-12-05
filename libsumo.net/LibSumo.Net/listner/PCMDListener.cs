@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LibSumo.Net.listner;
+using System;
 
 namespace LibSumo.Net.lib.listener
 {
@@ -7,7 +8,7 @@ namespace LibSumo.Net.lib.listener
 	/// <summary>
 	/// @author  Tobias Schneider
 	/// </summary>
-	public class PCMDListener : EventListener
+    public class PCMDListener : CommonEventListener
 	{
 
 		private readonly Action<string> consumer;
@@ -23,16 +24,17 @@ namespace LibSumo.Net.lib.listener
 
 			return new PCMDListener(consumer);
 		}
+		 
+        public new void consume(byte[] data) {
+            consumer.Invoke(System.Text.Encoding.UTF8.GetString(new byte[] {data[11]} ));
+        }
 
 
-		new public void eventFired(byte[] data)
-		{
 
-			if (filterProject(data, 3, 1, 0))
-			{
-				consumer.Invoke(Convert.ToString(data[11]));
-			}
-		}
+        public new  bool test(byte[] data) {
+            //LOGGER.debug("check for PCMD  packet");
+            return filterProject(data, 3, 1, 0);
+        }
 	}
 
 }
