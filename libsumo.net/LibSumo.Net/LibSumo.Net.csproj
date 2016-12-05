@@ -91,7 +91,8 @@
     <Compile Include="Network\DroneConnection.cs" />
     <Compile Include="Network\Handshake\HandshakeResponse.cs" />
     <Compile Include="Network\Handshake\HandshakeRequest.cs" />
-    <Compile Include="Network\Handshake\TcpHandshake.cs" />
+    <Compile Include="Network\Handshake\TcpHandshakeService.cs" />
+    <Compile Include="Command\PacketType.cs" />
     <Compile Include="Network\WirelessLanDroneConnection.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

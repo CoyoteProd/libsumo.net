@@ -13,13 +13,15 @@ namespace LibSumo.Net.lib.network
 	using EventListener = LibSumo.Net.lib.listener.EventListener;
 	using HandshakeRequest = LibSumo.Net.lib.network.handshake.HandshakeRequest;
 	using HandshakeResponse = LibSumo.Net.lib.network.handshake.HandshakeResponse;
-	using TcpHandshake = LibSumo.Net.lib.network.handshake.TcpHandshake;
+	using TcpHandshake = LibSumo.Net.lib.network.handshake.TcpHandshakeService;
     using System.Collections.Concurrent;
     using System;
     using LibSumo.Net.lib.command;
     using System.IO;
     using System.Net.Sockets;
     using System.Net;
+    using LibSumo.Net.lib.network.handshake;
+    using LibSumo.Net.Network;
 
 
 
@@ -52,6 +54,7 @@ namespace LibSumo.Net.lib.network
 		private byte ackCounter = 0;
 
         private IPEndPoint SumoRemote;
+        private byte[] nextSequenceNumbers;
 
 		public WirelessLanDroneConnection(string deviceIp, int tcpPort, string wirelessLanName)
 		{
@@ -62,8 +65,10 @@ namespace LibSumo.Net.lib.network
 			this.tcpPort = tcpPort;
 			this.wirelessLanName = wirelessLanName;
 
-            
-			//this.clock = Clock.systemDefaultZone();
+            //this.clock = Clock.systemDefaultZone();
+
+            nextSequenceNumbers = new byte[2];
+			
 		}
 
 		public virtual void connect()
@@ -71,12 +76,27 @@ namespace LibSumo.Net.lib.network
 
 			LOGGER.Info("Connecting to drone...");
 
-			HandshakeRequest handshakeRequest = new HandshakeRequest(wirelessLanName, CONTROLLER_TYPE);
-			HandshakeResponse handshakeResponse = (new TcpHandshake(deviceIp, tcpPort)).shake(handshakeRequest);
-			devicePort = handshakeResponse.C2d_port;
-			SumoRemote = new IPEndPoint(IPAddress.Parse(deviceIp), devicePort);
+			//HandshakeRequest handshakeRequest = new HandshakeRequest(wirelessLanName, CONTROLLER_TYPE);
+            //TcpHandshake DeviceShake = new TcpHandshake(deviceIp, tcpPort);
+            //HandshakeResponse handshakeResponse = DeviceShake.shake(handshakeRequest);
+            
+            HandshakeResponse handshakeResponse;
 
-            LOGGER.Info(String.Format("Connected to drone - Handshake completed with {0}", handshakeResponse));
+            try
+            {
+                handshakeResponse = new TcpHandshakeService(deviceIp, tcpPort).shake(new HandshakeRequest(wirelessLanName));
+                devicePort = handshakeResponse.C2d_port;
+                SumoRemote = new IPEndPoint(IPAddress.Parse(deviceIp), devicePort);
+
+                LOGGER.Info(String.Format("Connected to drone - Handshake completed with {0}", handshakeResponse));
+
+            }
+            catch (IOException e)
+            {
+                //throw new ConnectionException("Error while trying to connect to the drone - check your connection", e);
+            }
+
+			
 
 			sendCommand(CurrentDate.currentDate());
 			sendCommand(CurrentTime.currentTime());
@@ -177,7 +197,8 @@ namespace LibSumo.Net.lib.network
 							try
 							{
 								Command command = queue.Take();
-								byte[] packet = command.getBytes(changeAndGetCounter(command));
+                                int cnt = changeAndGetCounter(command);
+								byte[] packet = command.getBytes(cnt);
 								sumoSocket.Send(packet, packet.Length, SumoRemote);
 								LOGGER.Info(String.Format("Sending command: {0}", command));
 								Thread.Sleep(command.waitingTime());
