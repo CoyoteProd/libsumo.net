@@ -16,7 +16,7 @@ namespace LibSumo.Net.listner
 
         public void consume(byte[] data)
         {
-            throw new NotImplementedException();
+            
         }
 
         public bool test(byte[] data)

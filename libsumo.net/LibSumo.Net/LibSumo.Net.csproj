@@ -84,10 +84,10 @@
     <Compile Include="listner\BatteryState.cs" />
     <Compile Include="listner\CommonEventListener.cs" />
     <Compile Include="listner\iEventListener.cs" />
-    <Compile Include="listner\OutdoorSpeedListener.cs" />
     <Compile Include="listner\PCMDListener.cs" />
     <Compile Include="listner\VideoListener.cs" />
     <Compile Include="Command\Interfaces\iDroneConnection.cs" />
+    <Compile Include="Math\MovingAverage.cs" />
     <Compile Include="Network\Handshake\HandshakeResponse.cs" />
     <Compile Include="Network\Handshake\HandshakeRequest.cs" />
     <Compile Include="Network\Handshake\TcpHandshakeService.cs" />

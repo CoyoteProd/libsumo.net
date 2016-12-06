@@ -24,7 +24,8 @@ namespace LibSumo.Net.lib.network
     using LibSumo.Net.Network;
     using LibSumo.Net.lib.command.movement;
     using LibSumo.Net.Command.Interfaces;
-
+    using System.Linq;
+    using System.Collections.Generic;
 
 
 
@@ -45,6 +46,8 @@ namespace LibSumo.Net.lib.network
         private readonly BlockingCollection<iCommand> commonCommandQueue = new BlockingCollection<iCommand>(25);
         private readonly BlockingCollection<iCommand> commandQueue = new BlockingCollection<iCommand>(25);
 		private readonly List<EventListener> eventListeners = new List<EventListener>();
+        private readonly List<EventListener> commonEventListeners = new List<EventListener>();
+    
 
 		private readonly string deviceIp;
 		private readonly int tcpPort;
@@ -75,7 +78,7 @@ namespace LibSumo.Net.lib.network
 
             //this.clock = Clock.systemDefaultZone();
 
-            nextSequenceNumbers = new byte[2];
+            nextSequenceNumbers = new byte[Enum.GetNames(typeof(PacketType)).Length];
 			
 		}
 
@@ -184,24 +187,25 @@ namespace LibSumo.Net.lib.network
 					using (var udpClient = new UdpClient(devicePort))
 					{
 						LOGGER.Info(String.Format("Listing for response on port %s", devicePort));
-						int pingCounter = 0;
+						
 						while (listenToResponse) 
-					    {							                                                       
-							byte[] data = udpClient.Receive(ref SumoRemote);;
+					    {
+                            byte[] packet = udpClient.Receive(ref SumoRemote); ;
 
-							if (data[1] == 126)
-							{
-								LOGGER.Info("Ping");
-								sendCommand(Pong.pong(data[3]));
-								if (pingCounter > 10 && pingCounter % 10 == 1)
-								{
-									sendCommand(CurrentDate.currentDate());
-									sendCommand(CurrentTime.currentTime());
-								}
-								pingCounter++;
-								continue;
-							}
-							eventListeners.ForEach(eventListener => eventListener.eventFired(data));
+                            
+                            //LOGGER.trace("Receiving packet {}", convertAndCutPacket(packet, false));
+
+                            commonEventListeners.Where(e=>e.test(packet)).ToList().ForEach(e=>e.consume(packet));
+
+                            // Answer with a Pong
+                            if (packet[0] == 4 || packet[0] == 2)
+                            {
+                                sendCommand(Pong.pong(packet[2]));
+
+                                continue;
+                            }
+
+                            eventListeners.Where(e=>e.test(packet)).ToList().ForEach(e=>e.consume(packet));
 						}
 					}
 				}

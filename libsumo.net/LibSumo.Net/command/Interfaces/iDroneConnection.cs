@@ -2,6 +2,7 @@
 {
 
     using LibSumo.Net.lib.command;
+    using LibSumo.Net.lib.listener;
     //using Command = LibSumo.Net.lib.command.Command;
     using EventListener = LibSumo.Net.lib.listener.iEventListener;
 
@@ -32,7 +33,7 @@
 		/// Register the given <seealso cref="EventListener"/> to the <seealso cref="iDroneConnection"/>.
 		/// </summary>
 		/// <param name="eventListener">  with the capsuled functionality </param>
-		void addEventListener(EventListener eventListener);
+		void addEventListener(iEventListener eventListener);
 	}
 
 }

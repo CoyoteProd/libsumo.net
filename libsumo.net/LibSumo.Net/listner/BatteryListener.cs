@@ -24,14 +24,14 @@ namespace LibSumo.Net.lib.listener
 
 
 		 
-        public void consume(byte[] data) 
+        public new void consume(byte[] data) 
         {
             //LOGGER.debug("consuming battery packet");
             consumer.Invoke(data[11]);
         }
 
             
-        public bool test(byte[] data) 
+        public new bool test(byte[] data) 
         {
             //LOGGER.debug("check for battery packet");
             return filterProject(data, 0, 5, 1);

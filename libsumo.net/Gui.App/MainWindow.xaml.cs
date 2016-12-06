@@ -41,10 +41,8 @@ namespace Gui.App
             WirelessLanDroneConnection droneConnection = new WirelessLanDroneConnection("192.168.2.1", 44444, "com.example.arsdkap");
             droneController = new DroneController(droneConnection);
             
-            droneController.addBatteryListener(b=>LOGGER.Info("BatteryState: " + b));
-            droneController.addCriticalBatteryListener(b=>LOGGER.Info("Critical-BatteryState: " + b));
-            droneController.addPCMDListener(b=>LOGGER.Info("PCMD: " + b));
-            droneController.addOutdoorSpeedListener(b=>LOGGER.Info("Speed: " + b));
+            droneController.addBatteryListener(b=>LOGGER.Info("BatteryState: " + b));            
+            droneController.addPCMDListener(b=>LOGGER.Info("PCMD: " + b));            
         }
 
        

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using LibSumo.Net.Math;
+using LibSumo.Net.Network;
+using System;
 using System.IO;
 
 namespace LibSumo.Net.lib.listener
@@ -12,53 +14,45 @@ namespace LibSumo.Net.lib.listener
 	public class VideoListener : iEventListener
 	{
 
-		private readonly System.IO.FileStream fileOutputStream;
-		private int pictureCounter = 0;
-		private byte[] temp = new byte[] {};
+		private static string FRAME_JPG = "frame.jpg";
+        private static byte[] lastJpeg = null;
+        private bool writeToDisk=true;
+        //private float frameRate = 0;
+        long lastFrame = MovingAverage.CurrentTimeMillis() - 20;
+        MovingAverage average = new MovingAverage(20);
 
-//JAVA TO C# CONVERTER WARNING: Method 'throws' clauses are not available in .NET:
-//ORIGINAL LINE: public VideoListener() throws java.io.FileNotFoundException
-		public VideoListener()
+		private VideoListener()
 		{
 
-			fileOutputStream = new System.IO.FileStream("video.mp4", System.IO.FileMode.Create, System.IO.FileAccess.Write);
+			//fileOutputStream = new System.IO.FileStream("video.mp4", System.IO.FileMode.Create, System.IO.FileAccess.Write);
 		}
 
-//JAVA TO C# CONVERTER WARNING: Method 'throws' clauses are not available in .NET:
-//ORIGINAL LINE: public static VideoListener videoListener() throws java.io.FileNotFoundException
 		public static VideoListener videoListener()
 		{
 
 			return new VideoListener();
 		}
 
+        public void consume(byte[] data) 
+        {
+            //MathContext mc = new MathContext(2, RoundingMode.HALF_UP);
+            average.add( (MovingAverage.CurrentTimeMillis() - lastFrame)/1000);
 
-		new public virtual void eventFired(byte[] data)
-		{
+            //LOGGER.debug("consuming video packet at a framerate of {}", new BigDecimal(1).divide(average.getAverage(),mc));
+            byte[] jpeg = getJpeg(data);
+            if (writeToDisk) 
+            {                
+                using (FileStream fos = new FileStream(FRAME_JPG, FileMode.Create)) 
+                {
+                    //LOGGER.debug("writing video jpg to " + file.getAbsolutePath());    
+                    fos.Write(jpeg, 0, jpeg.Length);
+                }                
+            }
+            lastFrame = MovingAverage.CurrentTimeMillis();
+        }
+              
 
-			if (data[1] == 125)
-			{
-				concatenateByteArrays(temp, getJpegDate(data));
-
-				if (pictureCounter == 15)
-				{
-					try
-					{
-						fileOutputStream.Write(temp, 0, temp.Length);
-					}
-					catch (IOException e)
-					{
-						Console.WriteLine(e.ToString());
-						Console.Write(e.StackTrace);
-					}
-				}
-
-				pictureCounter++;
-			}
-		}
-
-
-		private byte[] getJpegDate(byte[] data)
+        private byte[] getJpeg(byte[] data)
 		{
 
 			byte[] jpegData = new byte[data.Length];
@@ -67,20 +61,25 @@ namespace LibSumo.Net.lib.listener
 			return jpegData;
 		}
 
+        public byte[] getLastJpeg()
+        {
+            return lastJpeg;
+        }
 
-		private byte[] concatenateByteArrays(byte[] a, byte[] b)
-		{
+   
+        public void setWriteToDisk(bool enable)
+        {
+            this.writeToDisk = enable;
+        }
 
-			byte[] result = new byte[a.Length + b.Length];
-			Array.Copy(a, 0, result, 0, a.Length);
-			Array.Copy(b, 0, result, a.Length, b.Length);
+        public bool test(byte[] data)
+        {
 
-			Console.WriteLine("a " + a.ToString());
-			Console.WriteLine("b " + b.ToString());
-			Console.WriteLine("result " + result.ToString());
+            bool jpgStart = ((int)data[12] == -1) && ((int)data[13] == -40);
 
-			return result;
-		}
+            return data[0] == (byte)PacketType.DATA_LOW_LATENCY && data[1] == 125 && jpgStart;
+        }
+
 	}
 
 }

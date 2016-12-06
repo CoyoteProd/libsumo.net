@@ -193,20 +193,14 @@ namespace LibSumo.Net
         }
 
 
-        public DroneController addCriticalBatteryListener(Action<BatteryState> consumer)
+        public DroneController addBatteryListener(Action<byte> consumer)
         {
 
-            droneConnection.addEventListener(CriticalBatteryListener.criticalBatteryListener(consumer));
+            this.droneConnection.addEventListener(BatteryListener.batteryListener(consumer));
 
             return this;
         }
 
-
-        public DroneController addBatteryListener(Action<Byte> consumer)
-        {
-            droneConnection.addEventListener(BatteryListener.batteryListener(consumer));
-            return this;
-        }
 
 
         public DroneController addPCMDListener(Action<String> consumer)
@@ -218,12 +212,7 @@ namespace LibSumo.Net
         }
 
 
-        public DroneController addOutdoorSpeedListener(Action<String> consumer)
-        {
-            droneConnection.addEventListener(OutdoorSpeedListener.outdoorSpeedListener(consumer));
-            return this;
-        }
-
+       
 
         public AudioController audio()
         {
