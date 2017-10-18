@@ -15,8 +15,6 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-
-
 namespace Gui.App
 {
     /// <summary>
@@ -42,10 +40,8 @@ namespace Gui.App
             droneController = new DroneController(droneConnection);
             
             droneController.addBatteryListener(b=>LOGGER.Info("BatteryState: " + b));            
-            droneController.addPCMDListener(b=>LOGGER.Info("PCMD: " + b));            
-        }
-
-       
-        
+            droneController.addPCMDListener(b=>LOGGER.Info("PCMD: " + b));
+            droneController.ondulation();    
+        }         
     }
 }
