@@ -1,3 +1,4 @@
 # libsumo.net
 
-Porting the excellent work of https://github.com/Devoxx4KidsDE/workshop-jumping-sumo to C#
+Triying to port the excellent work of https://github.com/Devoxx4KidsDE/workshop-jumping-sumo to C#
+but doesnt work for the moment...
