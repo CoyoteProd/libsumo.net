@@ -292,6 +292,11 @@ namespace LibSumo.Net
             // param = angle
             this.sender.Send(Commands.Volume_cmd(Volume));
         }
+        public void SetAuDioThemeVolume(SumoEnum.AudioTheme AudioTheme)
+        {
+            // param = angle
+            this.sender.Send(Commands.AudioTheme_cmd(AudioTheme));
+        }
 
         public void JumpLoad()
         {

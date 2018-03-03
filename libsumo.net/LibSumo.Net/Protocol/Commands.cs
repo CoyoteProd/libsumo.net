@@ -130,6 +130,15 @@ namespace LibSumo.Net.Protocol
         {            
             return StructConverter.Pack("<BBHB", 3, 12, 0, Volume);
         }
+        /// <summary>
+        /// Audio Theme.
+        /// </summary>
+        /// <param name="AudioTheme">The audio theme to set.</param>
+        /// <returns></returns>
+        public static byte[] AudioTheme_cmd(SumoEnum.AudioTheme AudioTheme)
+        {
+            return StructConverter.Pack("<BBHI", 3, 12, 1, (UInt16)AudioTheme);
+        }
 
         public static byte[] RequestAllStates_cmd()
         {

@@ -1,4 +1,4 @@
-# libsumo.net
+# libsumo.net 
 
 Here the first full working .Net Parrot Jumping Sumo library.
 
@@ -6,8 +6,9 @@ Feature
  - Full working integration of video in WPF application (Ready to be used with OpenCV)
  - Keyboard piloting class
  - Postures, Animations, Jumps implemented
- - Events (Rssi, PostureState, Battery Level...)
- - All dependencies by Nuget
+ - Events (Rssi, PostureState, Battery Level...) 
+ - Set Volume and AudioTheme 
+ - Nuget package available 
  
  This work was Inspired from https://github.com/iloreen/libsumo, https://github.com/robotika/lamia and https://github.com/frankibem/sumo-control Excellent Work!
 

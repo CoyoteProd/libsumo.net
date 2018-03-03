@@ -17,20 +17,23 @@
                 <Button x:Name="btnHighJump" Content="High Jump"  Width="75" Canvas.Left="209" Canvas.Top="19" Click="BtnHighJump_Click"/>
                 <Button x:Name="btnKick" Content="Load Spring"  Width="75" Canvas.Left="309" Canvas.Top="19" Click="BtnKick_Click" ToolTip="Only in Kicker Posture (F2). Press LongJump to release"/>
                 <Button x:Name="btnCancelJump" Content="Cancel Jump"  Width="75" Canvas.Left="409" Canvas.Top="19" Click="BtnCancelJump_Click"/>
-                <Label x:Name="lblPostureState" Content="PostureStateName" Canvas.Left="489" Canvas.Top="15" />
-                <Label x:Name="lblRssi" Content="Rssi" Canvas.Left="657" Canvas.Top="15" />
-                <Button x:Name="btnSTOP" Content="STOP"  Width="75" Click="BtnSTOP_Click" Canvas.Left="725" Canvas.Top="18" ToolTip="Emergency Stop. Stop all action of JumpingSumo and Stay Here"/>
-                <Slider x:Name="slVolume" Maximum="100" Canvas.Left="833" Canvas.Top="25" Width="120" Thumb.DragCompleted="slVolume_DragCompleted"/>
-                <Label Content="Volume" Canvas.Left="825" Canvas.Top="2"/>
+                <Label x:Name="lblPostureState" Content="PostureStateName" Canvas.Left="491" Canvas.Top="23" />
+                <Label x:Name="lblRssi" Content="Rssi" Canvas.Left="491" Canvas.Top="4" />
+                <Button x:Name="btnSTOP" Content="STOP"  Width="75" Click="BtnSTOP_Click" Canvas.Left="680" Canvas.Top="19" ToolTip="Emergency Stop. Stop all action of JumpingSumo and Stay Here"/>
+                <Slider x:Name="slVolume" Maximum="100" Canvas.Left="770" Canvas.Top="25" Width="89" Thumb.DragCompleted="slVolume_DragCompleted"/>
+                <Label Content="Volume" Canvas.Left="770" Canvas.Top="1"/>
+                <ComboBox x:Name="cbxAudioTheme" Canvas.Left="875" Canvas.Top="22" Width="120"/>
+                <Label Content="Audio Theme" Canvas.Left="872" Canvas.Top="1"/>
             </Canvas>
 
             <Canvas Width="100">
                 <Button Name="btnConnect" Content="Connect"  Width="75" Click="BtnConnect_Click" Canvas.Left="10" Canvas.Top="11"/>
                 <Button Name="btnDisconnect" Content="Disconnect"  Width="75" Click="btnDisconnect_Click" Canvas.Left="10" Canvas.Top="41"/>
                 <Button Name="btnSaveLog" Content="Save log" Width="75" Click="BtnSaveLog_Click" Canvas.Left="10" Canvas.Top="376"/>
+                <TextBox Name="FakeTxtBox" Height="23" Canvas.Left="23" TextWrapping="Wrap"  Canvas.Top="467" Width="34" Opacity="0"/>
             </Canvas>
 
-            <TextBox DockPanel.Dock="Bottom" Height="150" Name="txtBox" TextWrapping="NoWrap" Text=""  />
+            <TextBox DockPanel.Dock="Bottom" Height="150" Name="txtBox" TextWrapping="NoWrap" Text="" GotFocus="txtBox_GotFocus"  />
 
             <Canvas Name="cvtRight" IsEnabled="False" DockPanel.Dock="Right" Width="250">
                 <Slider Name="HSlider" HorizontalAlignment="Left" VerticalAlignment="Top" Width="186" Maximum="50" Minimum="-50" Canvas.Left="12" Canvas.Top="99"/>

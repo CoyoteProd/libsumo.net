@@ -15,7 +15,8 @@
     <PackageLicenseUrl>https://github.com/CoyoteProd/libsumo.net/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/CoyoteProd/libsumo.net</PackageProjectUrl>
     <RepositoryUrl>ttps://github.com/CoyoteProd/libsumo.net</RepositoryUrl>
-    <PackageTags>Parrot Sumo Jumping Jumpingsumo minidrone</PackageTags>
+    <PackageTags>Parrot Sumo Jumping Jumpingsumo minidrone libsumo</PackageTags>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

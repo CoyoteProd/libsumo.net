@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Diagnostics;
 using LibSumo.Net.Protocol;
+using System.Linq;
 
 namespace SumoApplication
 {
@@ -48,7 +49,12 @@ namespace SumoApplication
             piloting.Move += Piloting_Move;
             piloting.KeyboardKeysAvailable += Piloting_KeyboardKeysAvailable;
           
+            cbxAudioTheme.ItemsSource = Enum.GetValues(typeof(SumoEnum.AudioTheme)).Cast<SumoEnum.AudioTheme>();
+            cbxAudioTheme.SelectedIndex = 0;
+            this.cbxAudioTheme.SelectionChanged += CbxAudioTheme_SelectionChanged;
         }
+
+      
 
         #region Controller CallBack
         private void Controller_SumoEvents(object sender, SumoEventArgs e)
@@ -234,8 +240,11 @@ namespace SumoApplication
         {
             controller.STOP();
         }
-
-        
+        private void CbxAudioTheme_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            controller.SetAuDioThemeVolume((SumoEnum.AudioTheme)e.AddedItems[0]);
+            FakeTxtBox.Focus();
+        }
         private void slVolume_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
         {
             controller.Volume((byte)slVolume.Value);
@@ -262,7 +271,10 @@ namespace SumoApplication
             return (float)((degree / 2 * Math.PI) / 180.0);
         }
 
-       
+        private void txtBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            FakeTxtBox.Focus();
+        }
     }     
 
 }

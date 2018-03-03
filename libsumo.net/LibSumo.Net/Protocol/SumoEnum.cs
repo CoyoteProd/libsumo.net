@@ -132,5 +132,20 @@ namespace LibSumo.Net.Protocol
             Discovered,
             RSSI
         }
+
+        /// <summary>
+        /// The audio theme to set.
+        /// </summary>
+        public enum AudioTheme
+        {
+            // Default audio theme(depends on the product color)
+            Default,
+            // Robot audio theme.
+            Robot,
+            // Insect audio theme.					
+            Insect,
+            // Monster audio theme.
+            Monster					
+        }
     }
 }
