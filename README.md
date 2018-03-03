@@ -19,12 +19,12 @@ Nuget Packages used :
  
 SumoApplication Keyboard Feature (Self-Expendable):
  - Arrows key : Piloting Sumo
- - Numeric [1] [2] [3] : Animation (Tap, Ondulation, SlowShake)
- - Function [F1] : Normal mode
-            [F2] : Kicker
-            [F3] : Auto-Balance
- - [SPACE] [W] [S] : Quick Turn +-180°
- - [A], [D] : Quick Turn +-90
+ - Animation [1] [2] [3] :  (Tap, Ondulation, SlowShake)
+ - Postures  [F1] : Normal mode
+             [F2] : Kicker
+             [F3] : Auto-Balance
+ - [SPACE] [W] [S] : Quick Turn ±180°
+ - [A], [D] : Quick Turn ±90°
  - [ESC] : Disconnect
  
 Have fun !
