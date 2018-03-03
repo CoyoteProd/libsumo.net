@@ -234,7 +234,12 @@ namespace SumoApplication
         {
             controller.STOP();
         }
+
         
+        private void slVolume_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
+        {
+            controller.Volume((byte)slVolume.Value);
+        }
         private void GetInstance_MessageAvailable(object sender, MessageEventArgs e)
         {
             txtBox.Dispatcher.BeginInvoke((Action)(() =>
@@ -257,7 +262,7 @@ namespace SumoApplication
             return (float)((degree / 2 * Math.PI) / 180.0);
         }
 
-        
+       
     }     
 
 }

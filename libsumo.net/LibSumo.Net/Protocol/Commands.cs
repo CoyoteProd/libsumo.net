@@ -139,10 +139,7 @@ namespace LibSumo.Net.Protocol
         {
             return StructConverter.Pack("<BBH", 0, 2, 0);
         }
-        public static byte[] BAT_cmd()
-        {
-            return StructConverter.Pack("<BBH", 0, 5, 1);
-        }
+      
 
         /// <summary>
         /// Enable/Disabe Video Streaming
