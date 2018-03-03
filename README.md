@@ -30,4 +30,4 @@ Have fun !
 
 
 If some of you want to contribute to help me to buy  new Jumping... :
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](paypal.me/pools/c/82madPSBJJ)
+[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://paypal.me/pools/c/82madPSBJJ)
