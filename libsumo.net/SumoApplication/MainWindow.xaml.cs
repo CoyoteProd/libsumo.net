@@ -210,7 +210,7 @@ namespace SumoApplication
         {
             controller.Connect();                        
         }
-        private void btnDisconnect_Click(object sender, RoutedEventArgs e)
+        private void BtnDisconnect_Click(object sender, RoutedEventArgs e)
         {
             controller.Disconnect();
         }
@@ -245,7 +245,7 @@ namespace SumoApplication
             controller.SetAuDioThemeVolume((SumoEnum.AudioTheme)e.AddedItems[0]);
             FakeTxtBox.Focus();
         }
-        private void slVolume_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
+        private void SlVolume_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
         {
             controller.Volume((byte)slVolume.Value);
         }
@@ -264,6 +264,10 @@ namespace SumoApplication
             controller.Disconnect();
             controller.Dispose();
         }
+        private void TxtBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            FakeTxtBox.Focus();
+        }
         #endregion
 
         public float ToRadians(float degree)
@@ -271,10 +275,7 @@ namespace SumoApplication
             return (float)((degree / 2 * Math.PI) / 180.0);
         }
 
-        private void txtBox_GotFocus(object sender, RoutedEventArgs e)
-        {
-            FakeTxtBox.Focus();
-        }
+
     }     
 
 }

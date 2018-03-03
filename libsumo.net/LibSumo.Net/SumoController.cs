@@ -172,9 +172,11 @@ namespace LibSumo.Net
         /// Establish a connection to the drone and start receiving and sending data
         /// </summary>
         /// <returns></returns>
-        public async void Connect()
+        public bool Connect()
         {
-            IsConnected = await Task.Run(() => _discovery());            
+            Task<bool> disc = Task<bool>.Factory.StartNew(() => _discovery());
+            disc.Wait();
+            IsConnected = disc.Result; // await Task.Run(() => _discovery());            
             if (IsConnected)
             {
                 this.sender = new SumoSender(this.deviceIp, this.c2d_port);
@@ -199,7 +201,8 @@ namespace LibSumo.Net
                 RequestVideo();  //StartRequestStateThread();                
                 // Inform UI that is connected                
                 OnSumoEvents(new SumoEventArgs(SumoEnum.TypeOfEvents.Connected));
-            }            
+            }
+            return IsConnected;
         }
 
         private void Receiver_SumoEvents(object sender, SumoEventArgs e)
