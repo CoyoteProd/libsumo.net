@@ -96,11 +96,9 @@ namespace LibSumo.Net.Network
                     {
                         //LOGGER.GetInstance.Debug(String.Format("Send PCMD: {0}", BitConverter.ToString(this.cmd).Replace("-", "0x")));
                         using (var sumoSocket = new UdpClient())
-                        {
-                            //byte[] cmd = queue.Take();
+                        {                            
                             sumoSocket.Send(this.cmd, this.cmd.Length, SumoRemote);
-                        }                        
-                        this.cmd = Commands._pack_frame(Commands.Move_cmd(0, 0));
+                        }                                                
                     }
                     Thread.Sleep(25);
                 }
