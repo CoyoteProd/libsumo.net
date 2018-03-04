@@ -22,7 +22,7 @@ namespace LibSumo.Net.Network
         #region Properties
         public string Host { get; set; }
         public int Port { get; set; }
-        private bool Should_run { get; set; }
+        private bool IsConnected { get; set; }
         public int BatteryLevel { get; set; }
         #endregion
 
@@ -55,7 +55,7 @@ namespace LibSumo.Net.Network
 
         public void Run()
         {
-            this.Should_run = true;
+            this.IsConnected = true;
             Task.Run( () => SumoReceive());
         }
         /// <summary>
@@ -63,7 +63,7 @@ namespace LibSumo.Net.Network
         /// </summary>
         public void Disconnect()
         {
-            this.Should_run = false;
+            this.IsConnected = false;
         }
 
 
@@ -73,7 +73,7 @@ namespace LibSumo.Net.Network
             using (var udpClient = new UdpClient(SumoRemote))
             {
                 LOGGER.GetInstance.Info("[SumoReceiver] Thread Started");
-                while (this.Should_run)
+                while (this.IsConnected)
                 {
                     byte[] packet;
                     try
@@ -149,7 +149,7 @@ namespace LibSumo.Net.Network
                     else if (Tuple.Create(cmd_class, cmd_id).Equals(Tuple.Create<byte, UInt16>(5, 1)))
                     {
                         var battery = payload.SubArray("4:5")[0];
-                        LOGGER.GetInstance.Info(String.Format("Battery level: {0}", battery));
+                        LOGGER.GetInstance.Debug(String.Format("Battery level: {0}", battery));
                         BatteryLevel = battery;
                         var evt = new SumoEventArgs(SumoEnum.TypeOfEvents.BatteryLevelEvent)
                         {
@@ -160,7 +160,7 @@ namespace LibSumo.Net.Network
                     else if (Tuple.Create(cmd_class, cmd_id).Equals(Tuple.Create<byte, UInt16>(5, 0)))
                     {  // All states have been sent
                         var data = payload.SubArray("4:");
-                        LOGGER.GetInstance.Info(String.Format("All states have been sent: {0}", BitConverter.ToString(data)));
+                        LOGGER.GetInstance.Debug(String.Format("All states have been sent: {0}", BitConverter.ToString(data)));
                     } else
                     {
                         var data = payload.SubArray("4:");
@@ -174,11 +174,11 @@ namespace LibSumo.Net.Network
                         var Result2 = StructConverter.Unpack("<bh", payload.SubArray("4:"));
                         byte speed = (byte)Result2[0];
                         Int16 real_speed = (Int16)Result2[1];
-                        LOGGER.GetInstance.Debug(String.Format("Speed updated to {0} ({1} cm/s)", speed, real_speed));
+                        LOGGER.GetInstance.Info(String.Format("Speed updated to {0} ({1} cm/s)", speed, real_speed));
                     }else if (Tuple.Create(cmd_class, cmd_id).Equals(Tuple.Create<byte, UInt16>(1, 0)))
                     { 
                         var state = (Int32)StructConverter.Unpack("<i", payload.SubArray("4:"))[0];
-                        LOGGER.GetInstance.Info(String.Format("State of posture changed: {1}({0})", state, (SumoEnum.Posture)state).ToString());                        
+                        LOGGER.GetInstance.Debug(String.Format("State of posture changed: {1}({0})", state, (SumoEnum.Posture)state).ToString());                        
                         var evt = new SumoEventArgs(SumoEnum.TypeOfEvents.PostureEvent)
                         {
                             Posture = (SumoEnum.Posture)state
@@ -272,15 +272,13 @@ namespace LibSumo.Net.Network
                     }
                 }
                                 
-                this.parts.Add(fragment);
-                //this.parts[frag_no] = fragment;
+                this.parts.Add(fragment);                
 
                 // We've received the entire frame
                 if (!this.parts.Contains(null))
                 {
                     lock (mutex_frames_Lock)
-                    {
-                        //this._add_frame("".join(this.parts));
+                    {                        
                         this.frames.Add(this.parts.SelectMany(a => a).ToArray());
                     }
                 }
