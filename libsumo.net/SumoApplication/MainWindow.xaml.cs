@@ -30,11 +30,10 @@ namespace SumoApplication
 
 
         public MainWindow()
-        {
-           
+        {                       
             InitializeComponent();
             LOGGER.GetInstance.MessageAvailable += GetInstance_MessageAvailable;
-            // DEBUG : LOGGER.GetInstance.MessageLevel = log4net.Core.Level.All;
+            LOGGER.GetInstance.MessageLevel = log4net.Core.Level.All;
             frameWatch = new Stopwatch();
             controller = new SumoController(out piloting);            
             controller.ImageAvailable += Controller_ImageAvailable;
@@ -95,7 +94,20 @@ namespace SumoApplication
                 case (SumoEnum.TypeOfEvents.RSSI):
                     lblRssi.Dispatcher.BeginInvoke((Action)(() =>
                     {
-                        lblRssi.Content = e.Rssi.ToString() +" dbm";
+                        lblRssi.Content = "Wifi Signal : "+ e.Rssi.ToString() +" dbm";
+                    }));
+                    break;
+                case (SumoEnum.TypeOfEvents.LinkQuality):
+                    lblQuality.Dispatcher.BeginInvoke((Action)(() =>
+                    {
+                        lblQuality.Content = "Link Quality: " +e.LinkQuality.ToString() +"/6";
+                    }));
+                    break;
+
+                case (SumoEnum.TypeOfEvents.VolumeChange):
+                    slVolume.Dispatcher.BeginInvoke((Action)(() =>
+                    {
+                        slVolume.Value = e.Volume;
                     }));
                     break;
 
@@ -118,18 +130,21 @@ namespace SumoApplication
             }));
         }
 
-        //TODO : To Improve
+        //TODO : To Improved
         private void DisplayFPS()
         {
             if (frameWatch.IsRunning)
             {
                 frameWatch.Stop();
-                double fps = (1000 / frameWatch.ElapsedMilliseconds);
-                if (fps < 20) frameRate = fps;
-                lblBatteryLevel.Dispatcher.BeginInvoke((Action)(() =>
+                if (frameWatch.ElapsedMilliseconds > 0)
                 {
-                    lblFramerate.Content = Math.Round(frameRate, 1) + " fps";
-                }));
+                    double fps = (1000 / frameWatch.ElapsedMilliseconds);
+                    if (fps < 20) frameRate = fps;
+                    lblBatteryLevel.Dispatcher.BeginInvoke((Action)(() =>
+                    {
+                        lblFramerate.Content = Math.Round(frameRate, 1) + " fps";
+                    }));
+                }
             }
             else frameWatch = Stopwatch.StartNew();
         }
@@ -275,7 +290,17 @@ namespace SumoApplication
             return (float)((degree / 2 * Math.PI) / 180.0);
         }
 
+      
 
+        private void btnHeadlightOff_Click(object sender, RoutedEventArgs e)
+        {
+            controller.Headlight_off();
+        }
+
+        private void btnHeadlightOn_Click(object sender, RoutedEventArgs e)
+        {
+            controller.Headlight_on();
+        }
     }     
 
 }

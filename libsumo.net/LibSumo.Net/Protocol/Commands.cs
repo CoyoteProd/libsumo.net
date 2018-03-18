@@ -160,19 +160,23 @@ namespace LibSumo.Net.Protocol
             return StructConverter.Pack("<BBHB", 3, 18, 0, enable);
         }
 
+        public static byte[] Set_Headlight(byte left, byte right)
+        {
+            return StructConverter.Pack("<BBHBB", 0, 22, 0, left, right);
+        }
+
         /// <summary>
         /// Project: Commom(0), Class: Common(4), Command: CurrentDate(1)
         ///    Date (ISO-8601 format)
         /// </summary>
         /// <param name="date"></param>
         /// <returns></returns>
-        public static byte[] Sync_date_cmd(DateTime date)
+        public static byte[] Sync_date_cmd()
         {
             // ARCOMMANDS_ID_PROJECT_COMMON = 0,
             // ARCOMMANDS_ID_COMMON_CLASS_COMMON = 4,
             // ARCOMMANDS_ID_COMMON_COMMON_CMD_CURRENTDATE = 1,
-            // Date with ISO-8601 format
-            //return struct.pack("BBH", 0, 4, 1) + datetime.datetime.now() .isoformat() + '\0'            
+            // Date with ISO-8601 format            
             return (new byte[] { 0x00, 0x04, 0x01, 0x00 }).Concat(Encoding.UTF8.GetBytes(DateTime.Now.ToString("yyyy-MM-dd\0"))).ToArray();
         }
 
@@ -183,14 +187,14 @@ namespace LibSumo.Net.Protocol
         /// </summary>
         /// <param name="date"></param>
         /// <returns></returns>
-        public static byte[] Sync_time_cmd(DateTime date)
+        public static byte[] Sync_time_cmd()
         {
             // ARCOMMANDS_ID_PROJECT_COMMON = 0,
             // ARCOMMANDS_ID_COMMON_CLASS_COMMON = 4,
             // ARCOMMANDS_ID_COMMON_COMMON_CMD_CURRENTDATE = 1,
-            // Date with ISO-8601 format
-            //return struct.pack("BBH", 0, 4, 1) + datetime.datetime.now() .isoformat() + '\0'            
-            return (new byte[] { 0x00, 0x04, 0x01, 0x00 }).Concat(Encoding.UTF8.GetBytes(DateTime.Now.ToString("HH:mm:ss\0"))).ToArray();
+            // Date with ISO-8601 format            
+            //return (new byte[] { 0x00, 0x04, 0x01, 0x00 }).Concat(Encoding.UTF8.GetBytes(DateTime.Now.ToString("'T'HHmmssZZZ\0"))).ToArray();
+            return (new byte[] { 0x00, 0x04, 0x01, 0x00 }).Concat(Encoding.UTF8.GetBytes(DateTime.Now.ToString("'T'HHmmsszzz\0").Replace(":", ""))).ToArray();            
         }
 
         

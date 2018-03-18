@@ -130,7 +130,9 @@ namespace LibSumo.Net.Protocol
             Connected,
             Disconnected,
             Discovered,
-            RSSI
+            RSSI,
+            LinkQuality,
+            VolumeChange
         }
 
         /// <summary>

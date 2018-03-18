@@ -89,7 +89,8 @@ namespace LibSumo.Net
         {
 
             LOGGER.GetInstance.Info("Connecting to Jumping sumo...");
-            string strInitMsg = @"{ ""controller_type"":""computer"", ""controller_name"":""vilcoyote"", ""d2c_port"":""" + d2c_port + @"""}";
+            //string strInitMsg = @"{ ""controller_type"":""computer"", ""controller_name"":""a5xelte"", ""d2c_port"":""" + d2c_port + @"""}";
+            string strInitMsg = @"{ ""controller_type"":""a5xelte"", ""controller_name"":""SM-A510F"", ""d2c_port"":"+ d2c_port + @",""audio_codec"":3,""arstream2_client_stream_port"":55004,""arstream2_client_control_port"":55005}";
             try
             {
                 TcpClient tcpSocket = new TcpClient();
@@ -191,14 +192,17 @@ namespace LibSumo.Net
                 // Run Threads
                 this.receiver.Run();
                 this.sender.Run();
+                this.sender.Init();
                 this.display.Run();
                 if (this.piloting != null)
                 {
                     this.piloting.InstallHook();
                     this.piloting.RunPilotingThread();
                     this.piloting.RunKeyboardThread();
-                }
-                RequestVideo();  //StartRequestStateThread();                
+                }                
+
+                EnableVideo();  
+
                 // Inform UI that is connected                
                 OnSumoEvents(new SumoEventArgs(SumoEnum.TypeOfEvents.Connected));
             }
@@ -285,25 +289,21 @@ namespace LibSumo.Net
         /// <param name="Angle">in radian</param>
         /// <returns></returns>
         public void QuickTurn(float Angle)
-        {
-            // param = angle
+        {            
             this.sender.Send(Commands.Turn_cmd(Angle));
         }
 
         public void Volume(byte Volume)
-        {
-            // param = angle
+        {         
             this.sender.Send(Commands.Volume_cmd(Volume));
         }
         public void SetAuDioThemeVolume(SumoEnum.AudioTheme AudioTheme)
-        {
-            // param = angle
+        {            
             this.sender.Send(Commands.AudioTheme_cmd(AudioTheme));
         }
 
         public void JumpLoad()
-        {
-            // param = angle
+        {            
             this.sender.Send(Commands.JumpLoading_cmd());
         }
 
@@ -317,27 +317,29 @@ namespace LibSumo.Net
             this.sender.Send(Commands.STOP_cmd());
         }
 
-        public void RequestBatt()
+        public void Headlight_on()
         {
-            var date_time = DateTime.Now;
-            this.sender.Send(Commands.Sync_date_cmd(date_time));
-            this.sender.Send(Commands.Sync_time_cmd(date_time));
-            Thread.Sleep(25);
-            this.sender.Send(Commands.RequestAllStates_cmd());
-            Thread.Sleep(25);
-            this.sender.Send(Commands.RequestAllConfig_cmd());
-            Thread.Sleep(25);
+            this.sender.Send(Commands.Set_Headlight(255,255));
         }
+        public void Headlight_off()
+        {
+            this.sender.Send(Commands.Set_Headlight(0, 0));
+        }
+       
         #endregion
        
-        internal void RequestVideo()
+        internal void EnableVideo()
         {
             this.sender.Send(Commands.Set_media_streaming_cmd(true));            
         }
-                    
+        internal void DisableVideo()
+        {
+            this.sender.Send(Commands.Set_media_streaming_cmd(false));
+        }
+
 
         #region Event Handler
-       
+
 
         public delegate void ImageEventHandler(object sender, ImageEventArgs e);
         public event ImageEventHandler ImageAvailable;

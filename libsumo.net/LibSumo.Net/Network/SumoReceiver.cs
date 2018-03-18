@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -119,6 +120,14 @@ namespace LibSumo.Net.Network
             }
             else if (data_type == Constants.ARNETWORKAL_FRAME_TYPE_DATA || data_type == Constants.ARNETWORKAL_FRAME_TYPE_DATA_WITH_ACK)
             {
+                // Frame requires an ACK, send one
+                if (data_type == Constants.ARNETWORKAL_FRAME_TYPE_DATA_WITH_ACK)
+                {
+                    byte[] ack = _create_ack_packet(data_type, buffer_id, seq_no);
+                    this.sender.SendAck(ack);
+                    //LOGGER.GetInstance.Debug(String.Format("Sending ACK for {0} {1} {2} {3}", data_type, buffer_id, seq_no, frame_size));
+                }
+
                 // We received a data packet, log it (do more in future?)
                 var Result1 = StructConverter.Unpack("<BBH", payload.SubArray(":4"));
                 byte cmd_project = (byte)Result1[0];
@@ -129,17 +138,16 @@ namespace LibSumo.Net.Network
                     if (Tuple.Create(cmd_class, cmd_id).Equals(Tuple.Create<byte, UInt16>(5, 4)))
                     {
                         var date = payload.SubArray("4:");
-                        LOGGER.GetInstance.Info(String.Format("Date updated to: {0}", BitConverter.ToString(date)));
+                        LOGGER.GetInstance.Info(String.Format("Date updated to: {0}", Encoding.ASCII.GetString(date)));
                     }
                     else if (Tuple.Create(cmd_class, cmd_id).Equals(Tuple.Create<byte, UInt16>(5, 5)))
                     {
                         var time = payload.SubArray("4:");
-                        LOGGER.GetInstance.Info(String.Format("Time updated to: {0}", BitConverter.ToString(time)));
+                        LOGGER.GetInstance.Info(String.Format("Time updated to: {0}", Encoding.ASCII.GetString(time)));
                     }
                     else if (Tuple.Create(cmd_class, cmd_id).Equals(Tuple.Create<byte, UInt16>(5, 7)))
                     {                        
-                        Int16 rssi = (Int16)StructConverter.Unpack("<h", payload.SubArray("4:"))[0];
-                        LOGGER.GetInstance.Debug(String.Format("RSSI of the signal between controller and the product (in dbm): {0}", rssi));
+                        Int16 rssi = (Int16)StructConverter.Unpack("<h", payload.SubArray("4:"))[0];                        
                         var evt = new SumoEventArgs(SumoEnum.TypeOfEvents.RSSI)
                         {
                             Rssi = rssi
@@ -148,8 +156,7 @@ namespace LibSumo.Net.Network
                     }
                     else if (Tuple.Create(cmd_class, cmd_id).Equals(Tuple.Create<byte, UInt16>(5, 1)))
                     {
-                        var battery = payload.SubArray("4:5")[0];
-                        LOGGER.GetInstance.Debug(String.Format("Battery level: {0}", battery));
+                        var battery = payload.SubArray("4:5")[0];                        
                         BatteryLevel = battery;
                         var evt = new SumoEventArgs(SumoEnum.TypeOfEvents.BatteryLevelEvent)
                         {
@@ -161,7 +168,18 @@ namespace LibSumo.Net.Network
                     {  // All states have been sent
                         var data = payload.SubArray("4:");
                         LOGGER.GetInstance.Debug(String.Format("All states have been sent: {0}", BitConverter.ToString(data)));
-                    } else
+                    }
+                    else if (Tuple.Create(cmd_class, cmd_id).Equals(Tuple.Create<byte, UInt16>(5, 9)))
+                    {  // Device model
+                        byte Model = payload.SubArray("4:")[0];
+                        LOGGER.GetInstance.Debug(String.Format("Device Model: {0}", Model));
+                    }
+                    else if (Tuple.Create(cmd_class, cmd_id).Equals(Tuple.Create<byte, UInt16>(23, 0)))
+                    {  // All states have been sent
+                        var data = StructConverter.Unpack("<BB", payload.SubArray("4:"));                        
+                        LOGGER.GetInstance.Debug(String.Format("Headlight change: {0} {1}", data[0], data[1] ));
+                    }
+                    else
                     {
                         var data = payload.SubArray("4:");
                         LOGGER.GetInstance.Debug(String.Format("DataFrame | Project: {0}, Class: {1}, Id: {2} data: {3}", cmd_project, cmd_class, cmd_id, BitConverter.ToString(data)));
@@ -178,7 +196,7 @@ namespace LibSumo.Net.Network
                     }else if (Tuple.Create(cmd_class, cmd_id).Equals(Tuple.Create<byte, UInt16>(1, 0)))
                     { 
                         var state = (Int32)StructConverter.Unpack("<i", payload.SubArray("4:"))[0];
-                        LOGGER.GetInstance.Debug(String.Format("State of posture changed: {1}({0})", state, (SumoEnum.Posture)state).ToString());                        
+                        LOGGER.GetInstance.Debug(String.Format("State of posture changed: {1} ({0})", state, (SumoEnum.Posture)state).ToString());                        
                         var evt = new SumoEventArgs(SumoEnum.TypeOfEvents.PostureEvent)
                         {
                             Posture = (SumoEnum.Posture)state
@@ -188,29 +206,52 @@ namespace LibSumo.Net.Network
                     else if (Tuple.Create(cmd_class, cmd_id).Equals(Tuple.Create<byte, UInt16>(3, 0)))
                     { 
                         var state = (Int32)StructConverter.Unpack("<i", payload.SubArray("4:"))[0];
-                        LOGGER.GetInstance.Warn(String.Format("State of jump load changed: {1}({0})", state, (SumoEnum.JumpLoad)state).ToString());
+                        LOGGER.GetInstance.Warn(String.Format("State of jump load changed: {1} ({0})", state, (SumoEnum.JumpLoad)state).ToString());
+                    }
+                    else if (Tuple.Create(cmd_class, cmd_id).Equals(Tuple.Create<byte, UInt16>(3, 1)))
+                    {
+                        var state = (Int32)StructConverter.Unpack("<i", payload.SubArray("4:"))[0];
+                        LOGGER.GetInstance.Warn(String.Format("State of jump type changed: {1} ({0})", state, (SumoEnum.Jump)state).ToString());
                     }
                     else if (Tuple.Create(cmd_class, cmd_id).Equals(Tuple.Create<byte, UInt16>(3, 2)))
                     { 
                         var state = (Int32)StructConverter.Unpack("<i", payload.SubArray("4:"))[0];
-                        LOGGER.GetInstance.Error(String.Format("State about the jump motor problem: {1}({0})", state, (SumoEnum.MotorProblem)state).ToString());
+                        LOGGER.GetInstance.Error(String.Format("State about the jump motor problem: {1} ({0})", state, (SumoEnum.MotorProblem)state).ToString());
+                    }
+                    else if (Tuple.Create(cmd_class, cmd_id).Equals(Tuple.Create<byte, UInt16>(11,4)))
+                    {
+                        var linkQuality = (byte)StructConverter.Unpack("<B", payload.SubArray("4:"))[0];                        
+                        var evt = new SumoEventArgs(SumoEnum.TypeOfEvents.LinkQuality)
+                        {
+                            LinkQuality = linkQuality
+                        };
+                        OnSumoEvents(evt);
                     }
                     else if (Tuple.Create(cmd_class, cmd_id).Equals(Tuple.Create<byte, UInt16>(19, 0)))
                     {
                         var state = (Int32)StructConverter.Unpack("<i", payload.SubArray("4:"))[0];
                         LOGGER.GetInstance.Info(String.Format("Media streaming state is: {1}({0})", state, (SumoEnum.MediaStreamingState)state).ToString());
                     }
+                    else if (Tuple.Create(cmd_class, cmd_id).Equals(Tuple.Create<byte, UInt16>(13, 0)))
+                    {
+                        var VolumeState = (byte)payload.SubArray("4:")[0];
+                        //LOGGER.GetInstance.Info(String.Format("Volume state is: {0}", VolumeState));
+                        var evt = new SumoEventArgs(SumoEnum.TypeOfEvents.VolumeChange)
+                        {
+                            Volume = VolumeState
+                        };
+                        OnSumoEvents(evt);
+                    }
                     else if (Tuple.Create(cmd_class, cmd_id).Equals(Tuple.Create<byte, UInt16>(1, 1)))
                     {
-                        var state = (Int32)StructConverter.Unpack("<i", payload.SubArray("4:"))[0];
-                        LOGGER.GetInstance.Warn(String.Format("BatteryAlertStateChanged: {1}({0})", state, ((SumoEnum.BatteryAlert)state).ToString()));                        
+                        var state = (Int32)StructConverter.Unpack("<i", payload.SubArray("4:"))[0];                        
                         var evt = new SumoEventArgs(SumoEnum.TypeOfEvents.BatteryAlertEvent)
                         {
                             BatteryAlert = (SumoEnum.BatteryAlert)state
                         };
                         OnSumoEvents(evt);
 
-                    }
+                    }                    
                     else
                     {
                         var data = payload.SubArray("4:");                        
@@ -222,12 +263,8 @@ namespace LibSumo.Net.Network
                     var data = payload.SubArray("4:");
                     LOGGER.GetInstance.Debug(String.Format("DataFrame | Project: {0}, Class: {1}, Id: {2} data: {3}", cmd_project, cmd_class, cmd_id, BitConverter.ToString(data)));
                 }
-                // Frame requires an ACK, send one
-                if (data_type == Constants.ARNETWORKAL_FRAME_TYPE_DATA_WITH_ACK)
-                {
-                    this.sender.Send(_create_ack_packet(data_type, buffer_id, seq_no));
-                    //LOGGER.GetInstance.Debug(String.Format("Sending ACK for {0} {1} {2} {3}", data_type, buffer_id, seq_no, frame_size));
-                }
+
+                
             }
             else if (data_type == Constants.ARNETWORKAL_FRAME_TYPE_DATA_LOW_LATENCY)
             {
@@ -308,7 +345,7 @@ namespace LibSumo.Net.Network
 
         /// <summary>
         /// Returns (head, tail) where head is the first frame in the given data
-        //  and tail is the rest of the data    
+        ///  and tail is the rest of the data    
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
@@ -319,12 +356,10 @@ namespace LibSumo.Net.Network
                 // Must contain at least header, nothing to process
                 return Tuple.Create<byte[], byte[]>(null, data.SubArray("-1:-1"));
             }
-            var Result = _read_header(data);
-            //data_type, buffer_id, seq_no, frame_size = _read_header(data)
+            var Result = _read_header(data);            
             //var data_type = Result.Item1;
             //var buffer_id = Result.Item2;
-            //var seq_no = Result.Item3;
-            //var frame_size = Result.Item4;
+            //var seq_no = Result.Item3;            
             UInt32 frame_size = Result.Item4;
             return Tuple.Create(data.SubArray(":" + frame_size), data.SubArray(frame_size + ":"));
         }

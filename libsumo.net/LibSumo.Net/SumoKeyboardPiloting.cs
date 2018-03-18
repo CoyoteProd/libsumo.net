@@ -160,8 +160,8 @@ namespace LibSumo.Net
                     sbyte turn = 0;
                     int speed = 0;
 
-                /// original https://github.com/iloreen/libsumo algorythme
-                while (this.Should_run)
+                    /// original https://github.com/iloreen/libsumo algorythme
+                    while (this.Should_run)
                     {
 
                         sbyte mod = 0;
@@ -169,29 +169,29 @@ namespace LibSumo.Net
                         {
                             if (speed >= 0) mod = ACCELERATION_CONSTANT;
                             else mod = DECCELERATION_CONSTANT * 2;//breaking - we are going reverse                     
-                    }
+                        }
                         else if (KEY_DOWN == true)
                         {
                             if (speed <= 0) mod = -ACCELERATION_CONSTANT;
                             else mod = -DECCELERATION_CONSTANT * 2;//breaking
-                    }
+                        }
                         else if (!KEY_UP && !KEY_DOWN)
                         {
                             mod = (sbyte)(-speed / ACCELERATION_CONSTANT);
-                        ///* the faster we go the more we reduce speed */
-                        if (mod == 0 && speed != 0)
+                            ///* the faster we go the more we reduce speed */
+                            if (mod == 0 && speed != 0)
                             {
                                 if (speed < 0) mod = 1;
                                 else mod = -1;
                             }
                         }
                         speed += mod;
-                    //Limit
-                    if (speed > 127) speed = 127;
+                        //Limit
+                        if (speed > 127) speed = 127;
                         if (speed < -127) speed = -127;
 
-                    ///* turning */        
-                    mod = 0;
+                        ///* turning */        
+                        mod = 0;
                         if (KEY_LEFT == true) mod = -TURN_CONSTANT;
                         else if (KEY_RIGHT == true) mod = TURN_CONSTANT;
                         else if (!KEY_LEFT && !KEY_RIGHT)
@@ -200,9 +200,9 @@ namespace LibSumo.Net
                             if (Math.Abs(turn) < TURN_CONSTANT && turn != 0) mod = (sbyte)-turn;
                         }
                         turn += mod;
-                    //Limit
-                    if (turn > 32) turn = 32;
-                        if (turn < -32) turn = -32;
+                        //Limit
+                        if (turn > 100) turn = 100;
+                        if (turn < -100) turn = -100;
 
 
                         OnMove(new MoveEventArgs((sbyte)speed, (sbyte)turn));

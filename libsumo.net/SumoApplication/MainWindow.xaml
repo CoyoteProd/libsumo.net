@@ -12,14 +12,11 @@
 
             <Canvas Name="cvtTop" IsEnabled="False" DockPanel.Dock="Top"  Height="50">
                 <Label x:Name="lblFramerate" Content="Framerate" Canvas.Left="17" Canvas.Top="3" />
-                <Label x:Name="lblBatteryLevel" Content="BatteryLevel" Canvas.Left="17" Canvas.Top="25" />
                 <Button x:Name="btnLongJump" Content="Long Jump"  Width="75" Canvas.Left="109" Canvas.Top="19" Click="BtnLongJump_Click"/>
                 <Button x:Name="btnHighJump" Content="High Jump"  Width="75" Canvas.Left="209" Canvas.Top="19" Click="BtnHighJump_Click"/>
                 <Button x:Name="btnKick" Content="Load Spring"  Width="75" Canvas.Left="309" Canvas.Top="19" Click="BtnKick_Click" ToolTip="Only in Kicker Posture (F2). Press LongJump to release"/>
                 <Button x:Name="btnCancelJump" Content="Cancel Jump"  Width="75" Canvas.Left="409" Canvas.Top="19" Click="BtnCancelJump_Click"/>
-                <Label x:Name="lblPostureState" Content="PostureStateName" Canvas.Left="491" Canvas.Top="23" />
-                <Label x:Name="lblRssi" Content="Rssi" Canvas.Left="491" Canvas.Top="4" />
-                <Button x:Name="btnSTOP" Content="STOP"  Width="75" Click="BtnSTOP_Click" Canvas.Left="680" Canvas.Top="19" ToolTip="Emergency Stop. Stop all action of JumpingSumo and Stay Here"/>
+                <Button x:Name="btnSTOP" Content="STOP"  Width="75" Click="BtnSTOP_Click" Canvas.Left="514" Canvas.Top="19" ToolTip="Emergency Stop. Stop all action of JumpingSumo and Stay Here"/>
                 <Slider x:Name="slVolume" Maximum="100" Canvas.Left="770" Canvas.Top="25" Width="89" Thumb.DragCompleted="SlVolume_DragCompleted"/>
                 <Label Content="Volume" Canvas.Left="770" Canvas.Top="1"/>
                 <ComboBox x:Name="cbxAudioTheme" Canvas.Left="875" Canvas.Top="22" Width="120"/>
@@ -29,6 +26,8 @@
             <Canvas Width="100">
                 <Button Name="btnConnect" Content="Connect"  Width="75" Click="BtnConnect_Click" Canvas.Left="10" Canvas.Top="11"/>
                 <Button Name="btnDisconnect" Content="Disconnect"  Width="75" Click="BtnDisconnect_Click" Canvas.Left="10" Canvas.Top="41"/>
+                <Button Name="btnHeadlightOn" Content="Light On"  Width="75" Click="btnHeadlightOn_Click" Canvas.Left="10" Canvas.Top="90"/>
+                <Button Name="btnHeadlightOff" Content="Light Off"  Width="75" Click="btnHeadlightOff_Click" Canvas.Left="10" Canvas.Top="120"/>
                 <Button Name="btnSaveLog" Content="Save log" Width="75" Click="BtnSaveLog_Click" Canvas.Left="10" Canvas.Top="376"/>
                 <TextBox Name="FakeTxtBox" Height="23" Canvas.Left="23" TextWrapping="Wrap"  Canvas.Top="467" Width="34" Opacity="0"/>
             </Canvas>
@@ -40,6 +39,10 @@
                 <Slider Name="VSlider" HorizontalAlignment="Left" VerticalAlignment="Top" Width="22" Maximum="127" Minimum="-127" Orientation="Vertical" Height="161" Canvas.Left="95" Canvas.Top="28"/>
                 <Label Name="Vlbl" Content="Label" HorizontalAlignment="Left" VerticalAlignment="Top" Canvas.Left="87" Canvas.Top="9"/>
                 <Label Name="Hlbl" Content="Label" HorizontalAlignment="Left" VerticalAlignment="Top" Canvas.Left="194" Canvas.Top="94"/>
+                <Label x:Name="lblBatteryLevel" Content="BatteryLevel : N/A" Canvas.Left="25" Canvas.Top="212" RenderTransformOrigin="1.347,1.974" />
+                <Label x:Name="lblRssi" Content="Rssi : N/A" Canvas.Left="25" Canvas.Top="243" />
+                <Label x:Name="lblPostureState" Content="PostureStateName : N/A" Canvas.Left="25" Canvas.Top="300" />
+                <Label x:Name="lblQuality" Content="Quality link: N/A" Canvas.Left="25" Canvas.Top="269" />
             </Canvas>
 
             <Image  Name="image" IsEnabled="False"/>
