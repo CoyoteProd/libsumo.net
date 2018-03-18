@@ -1,6 +1,6 @@
 # libsumo.net 
 
-Here the first full working .Net Parrot Jumping Sumo library.
+Here the first full working .Net Parrot Jumping Sumo library in C#.
 
 Feature
  - Full working integration of video in WPF application (Ready to be used with OpenCV)
