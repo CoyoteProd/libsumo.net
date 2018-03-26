@@ -23,6 +23,7 @@ namespace SumoApplication
     {        
         private SumoController controller;
         private SumoKeyboardPiloting piloting;
+        private string AlerteStr, BatteryLevelStr, WifiRssiStr, WifiQualityStr;
 
         // Framerate calculation
         private double frameRate;
@@ -30,10 +31,11 @@ namespace SumoApplication
 
 
         public MainWindow()
-        {                       
+        {
+
             InitializeComponent();
             LOGGER.GetInstance.MessageAvailable += GetInstance_MessageAvailable;
-            LOGGER.GetInstance.MessageLevel = log4net.Core.Level.All;
+            //LOGGER.GetInstance.MessageLevel = log4net.Core.Level.All;
             frameWatch = new Stopwatch();
             controller = new SumoController(out piloting);            
             controller.ImageAvailable += Controller_ImageAvailable;
@@ -48,7 +50,7 @@ namespace SumoApplication
             piloting.Move += Piloting_Move;
             piloting.KeyboardKeysAvailable += Piloting_KeyboardKeysAvailable;
           
-            cbxAudioTheme.ItemsSource = Enum.GetValues(typeof(SumoEnum.AudioTheme)).Cast<SumoEnum.AudioTheme>();
+            cbxAudioTheme.ItemsSource = Enum.GetValues(typeof(SumoEnumGenerated.Theme_theme)).Cast<SumoEnumGenerated.Theme_theme>();
             cbxAudioTheme.SelectedIndex = 0;
             this.cbxAudioTheme.SelectionChanged += CbxAudioTheme_SelectionChanged;
         }
@@ -60,59 +62,70 @@ namespace SumoApplication
         {
             switch(e.TypeOfEvent)
             {
-                case (SumoEnum.TypeOfEvents.BatteryAlertEvent):
+                case (SumoEnumCustom.TypeOfEvents.AlertEvent):
+                    AlerteStr = e.Alert.ToString();                    
                     break;
-                case (SumoEnum.TypeOfEvents.BatteryLevelEvent):
+                case (SumoEnumCustom.TypeOfEvents.BatteryLevelEvent):
+                    BatteryLevelStr = e.BatteryLevel + "%";
+
                     lblBatteryLevel.Dispatcher.BeginInvoke((Action)(() =>
                     {
                         lblBatteryLevel.Content = e.BatteryLevel + "%";
+                        
                     }));
                     break;
-                case (SumoEnum.TypeOfEvents.Connected):
+                case (SumoEnumCustom.TypeOfEvents.Connected):
                     // Enable Btn
                     cvtTop.IsEnabled = true;
                     cvtRight.IsEnabled = true;
                     image.IsEnabled = true;
                     break;
-                case (SumoEnum.TypeOfEvents.Disconnected):
+                case (SumoEnumCustom.TypeOfEvents.Disconnected):
                     break;
-                case (SumoEnum.TypeOfEvents.Discovered):
+                case (SumoEnumCustom.TypeOfEvents.Discovered):
                     txtBox.Dispatcher.BeginInvoke((Action)(() =>
                     {
                         txtBox.AppendText(String.Format("Sumo is available {0} ", Environment.NewLine));
                         txtBox.ScrollToEnd();
                     }));
                     break;
-                case (SumoEnum.TypeOfEvents.PilotingEvent):
+                case (SumoEnumCustom.TypeOfEvents.PilotingEvent):
                     break;
-                case (SumoEnum.TypeOfEvents.PostureEvent):
+                case (SumoEnumCustom.TypeOfEvents.PostureEvent):
                     lblPostureState.Dispatcher.BeginInvoke((Action)(() =>
                     {
                         lblPostureState.Content = "Sumo in: " + e.Posture.ToString()+" position";
                     }));
                     break;
-                case (SumoEnum.TypeOfEvents.RSSI):
+                case (SumoEnumCustom.TypeOfEvents.RSSI):
+                    WifiRssiStr = e.Rssi.ToString() + " dbm";
                     lblRssi.Dispatcher.BeginInvoke((Action)(() =>
                     {
-                        lblRssi.Content = "Wifi Signal : "+ e.Rssi.ToString() +" dbm";
+                        lblRssi.Content = "Wifi Signal : "+ e.Rssi.ToString() +" dbm";                        
                     }));
                     break;
-                case (SumoEnum.TypeOfEvents.LinkQuality):
+                case (SumoEnumCustom.TypeOfEvents.LinkQuality):
+                    WifiQualityStr = e.LinkQuality.ToString() + "/6";
                     lblQuality.Dispatcher.BeginInvoke((Action)(() =>
                     {
                         lblQuality.Content = "Link Quality: " +e.LinkQuality.ToString() +"/6";
+                        
                     }));
                     break;
 
-                case (SumoEnum.TypeOfEvents.VolumeChange):
+                case (SumoEnumCustom.TypeOfEvents.VolumeChange):
                     slVolume.Dispatcher.BeginInvoke((Action)(() =>
                     {
                         slVolume.Value = e.Volume;
                     }));
                     break;
-
-
             }
+
+            // Update Info Label
+            lblInfo.Dispatcher.BeginInvoke((Action)(() =>
+            {
+                lblInfo.Content = String.Format("{0}, {1}, {2}, {3}",BatteryLevelStr, WifiQualityStr, WifiRssiStr, AlerteStr);
+            }));
         }
  
         private void Controller_ImageAvailable(object sender, ImageEventArgs e)
@@ -161,13 +174,13 @@ namespace SumoApplication
             {
                 // Postures
                 case ((int)HookUtils.VirtualKeyStates.VK_F1): // Normal
-                    controller.Postures(LibSumo.Net.Protocol.SumoEnum.Posture.jumper);
+                    controller.Postures(LibSumo.Net.Protocol.SumoEnumGenerated.Posture_type.jumper);
                     break;
                 case ((int)HookUtils.VirtualKeyStates.VK_F2): // Upside-Down
-                    controller.Postures(LibSumo.Net.Protocol.SumoEnum.Posture.kicker);
+                    controller.Postures(LibSumo.Net.Protocol.SumoEnumGenerated.Posture_type.kicker);
                     break;
                 case (int)(HookUtils.VirtualKeyStates.VK_F3): // Auto-Balance
-                    controller.Postures(LibSumo.Net.Protocol.SumoEnum.Posture.standing);
+                    controller.Postures(LibSumo.Net.Protocol.SumoEnumGenerated.Posture_type.standing);
                     break;
 
                 // Quick Turn
@@ -187,13 +200,13 @@ namespace SumoApplication
                                         
                 // Animations
                 case (0x31): // nuber 1
-                    controller.Animation(LibSumo.Net.Protocol.SumoEnum.Animation.tap);
+                    controller.Animation(LibSumo.Net.Protocol.SumoEnumGenerated.SimpleAnimation_id.tap);
                     break;
                 case (0x32): // nuber 2
-                    controller.Animation(LibSumo.Net.Protocol.SumoEnum.Animation.oudulation);
+                    controller.Animation(LibSumo.Net.Protocol.SumoEnumGenerated.SimpleAnimation_id.ondulation);
                     break;
                 case (0x33): // nuber 3
-                    controller.Animation(LibSumo.Net.Protocol.SumoEnum.Animation.slowshake);
+                    controller.Animation(LibSumo.Net.Protocol.SumoEnumGenerated.SimpleAnimation_id.slowshake);
                     break;
 
             }            
@@ -237,11 +250,11 @@ namespace SumoApplication
 
         private void BtnLongJump_Click(object sender, RoutedEventArgs e)
         {            
-            controller.Jump(LibSumo.Net.Protocol.SumoEnum.Jump.LongJump);
+            controller.Jump(LibSumo.Net.Protocol.SumoEnumGenerated.Jump_type._long);
         }
         private void BtnHighJump_Click(object sender, RoutedEventArgs e)
         {
-            controller.Jump(LibSumo.Net.Protocol.SumoEnum.Jump.HighJump);
+            controller.Jump(LibSumo.Net.Protocol.SumoEnumGenerated.Jump_type.high);
         }
         private void BtnKick_Click(object sender, RoutedEventArgs e)
         {
@@ -257,7 +270,7 @@ namespace SumoApplication
         }
         private void CbxAudioTheme_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            controller.SetAuDioThemeVolume((SumoEnum.AudioTheme)e.AddedItems[0]);
+            controller.SetAudioTheme((SumoEnumGenerated.Theme_theme)e.AddedItems[0]);
             FakeTxtBox.Focus();
         }
         private void SlVolume_DragCompleted(object sender, System.Windows.Controls.Primitives.DragCompletedEventArgs e)
@@ -292,12 +305,12 @@ namespace SumoApplication
 
       
 
-        private void btnHeadlightOff_Click(object sender, RoutedEventArgs e)
+        private void BtnHeadlightOff_Click(object sender, RoutedEventArgs e)
         {
             controller.Headlight_off();
         }
 
-        private void btnHeadlightOn_Click(object sender, RoutedEventArgs e)
+        private void BtnHeadlightOn_Click(object sender, RoutedEventArgs e)
         {
             controller.Headlight_on();
         }

@@ -144,7 +144,7 @@ namespace LibSumo.Net
                         PingReply reply = pinger.Send(deviceIp, 100);
                         if (reply.Status == IPStatus.Success)
                         {                            
-                            OnSumoEvents(new SumoEventArgs( SumoEnum.TypeOfEvents.Discovered));
+                            OnSumoEvents(new SumoEventArgs(SumoEnumCustom.TypeOfEvents.Discovered));
                             Ping_Should_run = false;
                         }
                     }
@@ -190,10 +190,10 @@ namespace LibSumo.Net
                 this.display.ImageAvailable += Display_ImageAvailable;
 
                 // Run Threads
-                this.receiver.Run();
-                this.sender.Run();
+                this.receiver.RunThread();
+                this.sender.RunThread();
                 this.sender.Init();
-                this.display.Run();
+                this.display.RunThread();
                 if (this.piloting != null)
                 {
                     this.piloting.InstallHook();
@@ -204,7 +204,7 @@ namespace LibSumo.Net
                 EnableVideo();  
 
                 // Inform UI that is connected                
-                OnSumoEvents(new SumoEventArgs(SumoEnum.TypeOfEvents.Connected));
+                OnSumoEvents(new SumoEventArgs(SumoEnumCustom.TypeOfEvents.Connected));
             }
             return IsConnected;
         }
@@ -252,16 +252,16 @@ namespace LibSumo.Net
         /// <param name="turn"></param>
         public void Move(sbyte speed, sbyte turn)
         {
-            this.sender.Send(Commands.Move_cmd(speed, turn));
+            this.sender.Send(SumoCommandsCustom.Move_cmd(speed, turn));
         }
 
         /// <summary>
         /// a pre-programmed movement or acrobatics
         /// </summary>
         /// <param name="Animation"></param>
-        public void Animation(SumoEnum.Animation Animation)
+        public void Animation(SumoEnumGenerated.SimpleAnimation_id Animation)
         {
-            this.sender.Send(Commands.Animation_cmd(Animation));
+            this.sender.Send(SumoCommandsGenerated.Animations_SimpleAnimation_cmd(Animation)); // Commands.Animation_cmd(Animation));
         }
 
         /// <summary>
@@ -269,18 +269,18 @@ namespace LibSumo.Net
         /// standing, jumper, kicker
         /// </summary>
         /// <param name="Posture">enum[standing, jumper, kicker]</param>
-        public void Postures(SumoEnum.Posture Posture)
+        public void Postures(SumoEnumGenerated.Posture_type Posture)
         {
-            this.sender.Send(Commands.Postures_cmd(Posture));
+            this.sender.Send(SumoCommandsGenerated.Piloting_Posture_cmd(Posture)); // Commands.Postures_cmd(Posture));
         }
 
         /// <summary>
         /// Start a Jump Action
         /// </summary>
         /// <param name="JumpType">enum[long, high]</param>
-        public void Jump(SumoEnum.Jump JumpType)
+        public void Jump(SumoEnumGenerated.Jump_type JumpType)
         {
-            this.sender.Send(Commands.Jump_cmd(JumpType));
+            this.sender.Send(SumoCommandsGenerated.Animations_Jump_cmd(JumpType)); // Commands.Jump_cmd(JumpType));
         }
 
         /// <summary>
@@ -289,52 +289,52 @@ namespace LibSumo.Net
         /// <param name="Angle">in radian</param>
         /// <returns></returns>
         public void QuickTurn(float Angle)
-        {            
-            this.sender.Send(Commands.Turn_cmd(Angle));
+        {
+            this.sender.Send(SumoCommandsGenerated.Piloting_addCapOffset_cmd(Angle)); //  Commands.Turn_cmd(Angle));
         }
 
         public void Volume(byte Volume)
-        {         
-            this.sender.Send(Commands.Volume_cmd(Volume));
+        {
+            this.sender.Send(SumoCommandsGenerated.AudioSettings_MasterVolume_cmd(Volume));// Commands.Volume_cmd(Volume));
         }
-        public void SetAuDioThemeVolume(SumoEnum.AudioTheme AudioTheme)
-        {            
-            this.sender.Send(Commands.AudioTheme_cmd(AudioTheme));
+        public void SetAudioTheme(SumoEnumGenerated.Theme_theme AudioTheme)
+        {
+            this.sender.Send(SumoCommandsGenerated.AudioSettings_Theme_cmd(AudioTheme)); // Commands.AudioTheme_cmd(AudioTheme));
         }
 
         public void JumpLoad()
-        {            
-            this.sender.Send(Commands.JumpLoading_cmd());
+        {
+            this.sender.Send(SumoCommandsGenerated.Animations_JumpLoad_cmd()); // Commands.JumpLoading_cmd());
         }
 
         public void CancelJump()
-        {            
-            this.sender.Send(Commands.CancelJump_cmd());
+        {
+            this.sender.Send(SumoCommandsGenerated.Animations_JumpCancel_cmd()); // Commands.CancelJump_cmd());
         }
 
         public void STOP()
         {
-            this.sender.Send(Commands.STOP_cmd());
+            this.sender.Send(SumoCommandsGenerated.Animations_JumpStop_cmd()); // Commands.STOP_cmd());
         }
 
         public void Headlight_on()
         {
-            this.sender.Send(Commands.Set_Headlight(255,255));
+            this.sender.Send(SumoCommandsGenerated.Headlights_intensity_cmd(255, 255)); // Commands.Set_Headlight(255,255));
         }
         public void Headlight_off()
         {
-            this.sender.Send(Commands.Set_Headlight(0, 0));
+            this.sender.Send(SumoCommandsGenerated.Headlights_intensity_cmd(0, 0)); // Commands.Set_Headlight(0, 0));
         }
        
         #endregion
        
         internal void EnableVideo()
         {
-            this.sender.Send(Commands.Set_media_streaming_cmd(true));            
+            this.sender.Send(SumoCommandsGenerated.MediaStreaming_VideoEnable_cmd(1));// Commands.Set_media_streaming_cmd(true));            
         }
         internal void DisableVideo()
         {
-            this.sender.Send(Commands.Set_media_streaming_cmd(false));
+            this.sender.Send(SumoCommandsGenerated.MediaStreaming_VideoEnable_cmd(0)); // Commands.Set_media_streaming_cmd(false));
         }
 
 

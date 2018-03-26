@@ -47,18 +47,18 @@ namespace LibSumo.Net.Events
     /// </summary>
     public class SumoEventArgs : System.EventArgs
     {
-        public SumoEnum.Posture Posture { get; set; }
+        public SumoEnumGenerated.PostureChanged_state Posture { get; set; }
         public int BatteryLevel { get; set; }
         public int Rssi { get; set; }
         public int LinkQuality { get; set; }
-        public SumoEnum.BatteryAlert BatteryAlert { get; set; }
+        public SumoEnumGenerated.AlertStateChanged_state Alert { get; set; }
         public sbyte Speed { get; set; }
         public sbyte Turn { get; set; }
 
-        public SumoEnum.TypeOfEvents TypeOfEvent { get; set; }
+        public SumoEnumCustom.TypeOfEvents TypeOfEvent { get; set; }
         public byte Volume { get; internal set; }
 
-        public SumoEventArgs(SumoEnum.TypeOfEvents _typeOfEvents)
+        public SumoEventArgs(SumoEnumCustom.TypeOfEvents _typeOfEvents)
         {
             TypeOfEvent = _typeOfEvents;
         }

@@ -26,8 +26,8 @@
             <Canvas Width="100">
                 <Button Name="btnConnect" Content="Connect"  Width="75" Click="BtnConnect_Click" Canvas.Left="10" Canvas.Top="11"/>
                 <Button Name="btnDisconnect" Content="Disconnect"  Width="75" Click="BtnDisconnect_Click" Canvas.Left="10" Canvas.Top="41"/>
-                <Button Name="btnHeadlightOn" Content="Light On"  Width="75" Click="btnHeadlightOn_Click" Canvas.Left="10" Canvas.Top="90"/>
-                <Button Name="btnHeadlightOff" Content="Light Off"  Width="75" Click="btnHeadlightOff_Click" Canvas.Left="10" Canvas.Top="120"/>
+                <Button Name="btnHeadlightOn" Content="Light On"  Width="75" Click="BtnHeadlightOn_Click" Canvas.Left="10" Canvas.Top="90"/>
+                <Button Name="btnHeadlightOff" Content="Light Off"  Width="75" Click="BtnHeadlightOff_Click" Canvas.Left="10" Canvas.Top="120"/>
                 <Button Name="btnSaveLog" Content="Save log" Width="75" Click="BtnSaveLog_Click" Canvas.Left="10" Canvas.Top="376"/>
                 <TextBox Name="FakeTxtBox" Height="23" Canvas.Left="23" TextWrapping="Wrap"  Canvas.Top="467" Width="34" Opacity="0"/>
             </Canvas>
@@ -44,8 +44,10 @@
                 <Label x:Name="lblPostureState" Content="PostureStateName : N/A" Canvas.Left="25" Canvas.Top="300" />
                 <Label x:Name="lblQuality" Content="Quality link: N/A" Canvas.Left="25" Canvas.Top="269" />
             </Canvas>
-
-            <Image  Name="image" IsEnabled="False"/>
+            <DockPanel>
+                <Label x:Name="lblInfo" Content="infos" DockPanel.Dock="Top" />
+                <Image  Name="image" IsEnabled="False" Source="1200x630bb_Wfq_icon.ico"/>
+            </DockPanel>
         </DockPanel>
     </Grid>
 </Window>

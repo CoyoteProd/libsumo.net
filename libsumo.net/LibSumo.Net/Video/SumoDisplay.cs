@@ -14,7 +14,7 @@ namespace LibSumo.Net.Video
     {
         #region Private Fields
         private SumoReceiver receiver;
-        private bool Should_run { get; set; }
+        private bool IsConnected { get; set; }
         private string Window_name { get; set; }
         #endregion
 
@@ -24,14 +24,13 @@ namespace LibSumo.Net.Video
         public SumoDisplay(SumoReceiver _receiver)
         {            
             this.receiver = _receiver;            
-            this.Window_name = "Sumo Display";
-            
+            this.Window_name = "Sumo Display";            
         }
         #endregion
 
-        public void Run()
+        public void RunThread()
         {
-            this.Should_run = true; ;
+            this.IsConnected = true; ;
             Task.Run(() => SumoVideo());
         }
         /// <summary>
@@ -39,7 +38,7 @@ namespace LibSumo.Net.Video
         /// </summary>
         public void Disconnect()
         {
-            this.Should_run = false;
+            this.IsConnected = false;
             if (ImageInSeparateOpenCVWindow)
             {
                 // TODO : try to resolve hang here
@@ -54,7 +53,7 @@ namespace LibSumo.Net.Video
         {             
             LOGGER.GetInstance.Info("[SumoDisplay] Thread Started");
             
-            while (this.Should_run)
+            while (this.IsConnected)
             {
                 var frame = this.receiver.Get_video_frame();
                 if (frame != null)

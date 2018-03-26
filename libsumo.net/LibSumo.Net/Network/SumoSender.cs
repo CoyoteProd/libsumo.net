@@ -40,8 +40,7 @@ namespace LibSumo.Net.Network
         private DefaultDict<int, int> seq_ids;
         private IPEndPoint SumoRemote;
         private UdpClient sumoSocket;
-        private byte[] cmd;
-        private object send_lock;
+        private byte[] cmd;        
         private bool isConnected;
         #endregion
 
@@ -49,15 +48,13 @@ namespace LibSumo.Net.Network
         public SumoSender(string host, int port)
         {
             this.Host = host;
-            this.Port = port;
-            this.send_lock = new object();            
+            this.Port = port;            
             this.seq_ids = new DefaultDict<int, int>();
             SumoRemote = new IPEndPoint(IPAddress.Parse(host), port);
             sumoSocket = new UdpClient();
 
-            // Initial command (no motion)            
-            this.cmd = Commands._pack_frame(Commands.Move_cmd(0, 0));
-            //Debug.Assert(Commands._is_pcmd(this.cmd));
+            // Initial command (no motion)                 
+            this.cmd = SumoCommandsCustom._pack_frame(SumoCommandsCustom.Move_cmd(0, 0));            
         }
         #endregion
 
@@ -69,8 +66,7 @@ namespace LibSumo.Net.Network
         /// <returns></returns>
         private byte[] _update_seq(byte[] cmd)
         {
-            Debug.Assert(cmd.Length > 3);
-            //Debug.Assert(str(cmd));
+            Debug.Assert(cmd.Length > 3);            
             var buffer_id = cmd[1];
             this.seq_ids[buffer_id] = (this.seq_ids[buffer_id] + 1) % 256;
             return cmd.SubArray(":2").Concat(new byte[] { (byte)this.seq_ids[buffer_id] }).Concat(cmd.SubArray("3:")).ToArray();
@@ -82,19 +78,15 @@ namespace LibSumo.Net.Network
             {
                 LOGGER.GetInstance.Info("[SumoSender] Thread Started");                
                 while (isConnected)
-                {
-                    lock (this.send_lock)
-                    {
-                        //LOGGER.GetInstance.Debug(String.Format("Send PCMD: {0}", BitConverter.ToString(this.cmd).Replace("-", "0x")));
-                        sumoSocket.Send(this.cmd, this.cmd.Length, SumoRemote);
-                        this.cmd = Commands._pack_frame(Commands.Move_cmd(0, 0));
-                    }
-                    Thread.Sleep(25);
-                }
-                
+                {                                       
+                    sumoSocket.Send(this.cmd, this.cmd.Length, SumoRemote);
+                    this.cmd = SumoCommandsCustom._pack_frame(SumoCommandsCustom.Move_cmd(0, 0));                    
+                    Thread.Sleep(40);
+                }                
             }
-            catch
+            catch(Exception e)
             {
+                LOGGER.GetInstance.Error(e.Message);
             }
             LOGGER.GetInstance.Info("[SumoSender] Thread Stopped");
         }
@@ -102,13 +94,13 @@ namespace LibSumo.Net.Network
         public  void Init()
         {
             // Initial configuration            
-            this.Send(Commands.Sync_date_cmd());
+            this.Send(SumoCommandsGenerated.Common_CurrentDate_cmd(DateTime.Now.ToString("yyyy-MM-dd\0"))); //this.Send(Commands.Sync_date_cmd());
             Thread.Sleep(25);
-            this.Send(Commands.Sync_time_cmd());
+            this.Send(SumoCommandsGenerated.Common_CurrentTime_cmd(DateTime.Now.ToString("'T'HHmmsszzz\0").Replace(":", ""))); //this.Send(Commands.Sync_time_cmd());
             Thread.Sleep(25);
-            this.Send(Commands.RequestAllStates_cmd());
+            this.Send(SumoCommandsGenerated.Common_AllStates_cmd()); //this.Send(Commands.RequestAllStates_cmd());
             Thread.Sleep(25);
-            this.Send(Commands.RequestAllConfig_cmd());            
+            this.Send(SumoCommandsGenerated.Settings_AllSettings_cmd()); //this.Send(Commands.RequestAllConfig_cmd());            
         }
 
         #endregion
@@ -126,34 +118,26 @@ namespace LibSumo.Net.Network
             if (isConnected)
             {
                 if (cmd != null)
-                {
-                    lock (this.send_lock)
-                    {
-                        byte[] frame = this._update_seq(Commands._pack_frame(cmd));
-                        if (Commands._is_pcmd(frame)) this.cmd = frame;                        
-                        else sumoSocket.Send(frame, frame.Length, SumoRemote);                                                    
-                    }
+                {                                       
+                    byte[] frame = this._update_seq(SumoCommandsCustom._pack_frame(cmd));
+                    if (SumoCommandsCustom._is_pcmd(frame)) this.cmd = frame;                        
+                    else sumoSocket.Send(frame, frame.Length, SumoRemote);                                                                        
                 }
             }
         }
 
+        /// <summary>
+        /// Immediately send ACK
+        /// Ack dosen't have header!
+        /// </summary>
+        /// <param name="cmd"></param>
         public void SendAck(byte[] cmd)
         {
-            if (isConnected)
-            {
+            if (isConnected)            
                 if (cmd != null)
-                {
-                    lock (this.send_lock)
-                    {
-                        //byte[] frame = this._update_seq(Commands._pack_frame(cmd));
-                        //if (Commands._is_pcmd(frame)) this.cmd = frame;
-                        //else 
-                        sumoSocket.Send(cmd, cmd.Length, SumoRemote);
-                    }
-                }
-            }
+                    sumoSocket.Send(cmd, cmd.Length, SumoRemote);                                               
         }
-        public void Run()
+        public void RunThread()
         {
             isConnected = true;
             Task.Run(() => SumoSend());

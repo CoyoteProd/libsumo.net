@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 
 namespace LibSumo.Net.Helpers
 {
@@ -21,7 +22,8 @@ namespace LibSumo.Net.Helpers
             if (o is double) return BitConverter.GetBytes((double)o);
             if (o is float) return BitConverter.GetBytes((float)o);
             if (o is sbyte) return new byte[] { BitConverter.GetBytes((sbyte)o)[0] };
-            if (o is byte) return new byte[] { (byte)o };            
+            if (o is byte) return new byte[] { (byte)o };
+            if (o is string) return Encoding.UTF8.GetBytes((string)o);
             throw new ArgumentException("Unsupported object type found");
         }
 
@@ -37,6 +39,7 @@ namespace LibSumo.Net.Helpers
             if (o is float) return "d";
             if (o is byte) return "B";
             if (o is sbyte) return "b";
+            if (o is string) return "s";
             throw new ArgumentException("Unsupported object type found");
         }
 
@@ -199,13 +202,13 @@ namespace LibSumo.Net.Helpers
 
         }
 
-        public static byte[] Pack(string fmt, params object[] bytes)
+        public static byte[] Pack(string fmt, params object[] objects)
         {
             //Debug.WriteLine("Format string is length {0}, {1} bytes provided.", fmt.Length, bytes.Length);
 
             // First we parse the format string to make sure it's proper.
             if (fmt.Length < 1) throw new ArgumentException("Format string cannot be empty.");
-            if (fmt.Length-1 != bytes.Length) throw new ArgumentException("Format string not match Array of Object");
+            if (fmt.Length-1 != objects.Length) throw new ArgumentException("Format string not match Array of Object");
 
             //bool endianFlip = false;
             if (fmt.Substring(0, 1) == "<")
@@ -218,7 +221,7 @@ namespace LibSumo.Net.Helpers
             }            
                         
             // Ok, we can go ahead and start parsing bytes!
-            int byteArrayPosition = 0;
+            int objectArrayPosition = 0;
             List<object> outputList = new List<object>();            
 
             //Debug.WriteLine("Processing byte array...");
@@ -228,50 +231,53 @@ namespace LibSumo.Net.Helpers
                 {
                     
                     case 'd':
-                        outputList.Add((float)Convert.ToDouble(bytes[byteArrayPosition]));                        
+                        outputList.Add((float)Convert.ToDouble(objects[objectArrayPosition]));                        
                         //Debug.WriteLine("  Added double.");
                         break;                    
                     case 'q':
-                        outputList.Add(Convert.ToInt64(bytes[byteArrayPosition]));                        
+                        outputList.Add(Convert.ToInt64(objects[objectArrayPosition]));                        
                         //Debug.WriteLine("  Added signed 64-bit integer.");
                         break;
                     case 'Q':
-                        outputList.Add(Convert.ToUInt64(bytes[byteArrayPosition]));                        
+                        outputList.Add(Convert.ToUInt64(objects[objectArrayPosition]));                        
                         //Debug.WriteLine("  Added unsigned 64-bit integer.");
                         break;
                     case 'l':
                     case 'i':
-                        outputList.Add(Convert.ToInt32(bytes[byteArrayPosition]));                        
+                        outputList.Add(Convert.ToInt32(objects[objectArrayPosition]));                        
                         //Debug.WriteLine("  Added signed 32-bit integer.");
                         break;
                     case 'I':
                     case 'L':
-                        outputList.Add(Convert.ToUInt32(bytes[byteArrayPosition]));                        
+                        outputList.Add(Convert.ToUInt32(objects[objectArrayPosition]));                        
                         //Debug.WriteLine("  Added unsignedsigned 32-bit integer.");
                         break;
                     case 'h':
-                        outputList.Add(Convert.ToInt16(bytes[byteArrayPosition]));                        
+                        outputList.Add(Convert.ToInt16(objects[objectArrayPosition]));                        
                         //Debug.WriteLine("  Added signed 16-bit integer.");
                         break;
                     case 'H':
-                        outputList.Add(Convert.ToUInt16(bytes[byteArrayPosition]));                        
+                        outputList.Add(Convert.ToUInt16(objects[objectArrayPosition]));                        
                         //Debug.WriteLine("  Added unsigned 16-bit integer.");
                         break;
                     case 'b':
-                        outputList.Add(Convert.ToSByte(bytes[byteArrayPosition]));
+                        outputList.Add(Convert.ToSByte(objects[objectArrayPosition]));
                         //Debug.WriteLine("  Added signed byte");
                         break;
                     case 'B':
-                        outputList.Add(Convert.ToByte(bytes[byteArrayPosition]));
+                        outputList.Add(Convert.ToByte(objects[objectArrayPosition]));
                         //Debug.WriteLine("  Added unsigned byte");
                         break;
                     case 'x':                        
                         //Debug.WriteLine("  Ignoring a byte");
                         break;
+                    case 's':
+                        outputList.Add(objects[objectArrayPosition]);
+                        break;
                     default:
                         throw new ArgumentException("You should not be here.");
                 }
-                byteArrayPosition++;
+                objectArrayPosition++;
             }
                         
             byte[] OutByte = Pack(outputList, true, out string dummy);

@@ -158,7 +158,7 @@ namespace LibSumo.Net
                 {
                     LOGGER.GetInstance.Info("Piloting Thread Started");
                     sbyte turn = 0;
-                    int speed = 0;
+                    int speed = 0;                                        
 
                     /// original https://github.com/iloreen/libsumo algorythme
                     while (this.Should_run)
@@ -203,10 +203,10 @@ namespace LibSumo.Net
                         //Limit
                         if (turn > 100) turn = 100;
                         if (turn < -100) turn = -100;
+                                               
+                        OnMove(new MoveEventArgs((sbyte)speed, (sbyte)turn));                                       
 
-
-                        OnMove(new MoveEventArgs((sbyte)speed, (sbyte)turn));
-                        Thread.Sleep(20);
+                        Thread.Sleep(30);
                     }
                     LOGGER.GetInstance.Info("Piloting Thread Stopped");
                 });
