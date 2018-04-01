@@ -1,84 +1,137 @@
-﻿using LibSumo.Net.Logger;
-using LibSumo.Net;
-using System;
+﻿using System;
 using System.Windows;
 using System.IO;
-using LibSumo.Net.Events;
-using OpenCvSharp.Extensions;
 using System.Windows.Media;
-using LibSumo.Net.Hook;
-using LibSumo.Net.Helpers;
-using System.Threading.Tasks;
-using System.Threading;
 using System.Diagnostics;
-using LibSumo.Net.Protocol;
 using System.Linq;
+
+using LibSumo.Net;
+using LibSumo.Net.Events;
+using LibSumo.Net.Logger;
+using LibSumo.Net.Hook;
+using LibSumo.Net.Protocol;
+
+using OpenCvSharp;
+using OpenCvSharp.Extensions;
+
+using System.Reflection;
+using System.Drawing;
+using SumoApplication.Video;
 
 namespace SumoApplication
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : System.Windows.Window, IDisposable
     {        
         private SumoController controller;
         private SumoKeyboardPiloting piloting;
-        private string AlerteStr, BatteryLevelStr, WifiRssiStr, WifiQualityStr;
+        private SumoInformations sumoInformations;
+
+        //private string AlerteStr, BatteryLevelStr, WifiRssiStr, WifiQualityStr;
 
         // Framerate calculation
         private double frameRate;
-        private Stopwatch frameWatch;        
+        private Stopwatch frameWatch;
 
+        Mat SplashImage;
 
         public MainWindow()
         {
 
-            InitializeComponent();
-            LOGGER.GetInstance.MessageAvailable += GetInstance_MessageAvailable;
-            //LOGGER.GetInstance.MessageLevel = log4net.Core.Level.All;
-            frameWatch = new Stopwatch();
-            controller = new SumoController(out piloting);            
-            controller.ImageAvailable += Controller_ImageAvailable;
-            controller.SumoEvents += Controller_SumoEvents ;            
+            InitializeComponent();           
 
-            // If you want process video in OpenCV separate window Set EnableOpenCV to true
-            // In this case controller.ImageAvailable is not fired
-            //controller.EnableOpenCV = true;
+            LOGGER.GetInstance.MessageAvailable += GetInstance_MessageAvailable;
+            //LOGGER.GetInstance.MessageLevel = log4net.Core.Level.Debug;
+            frameWatch = new Stopwatch();
+            //sumoInformations = new SumoInformations();
+
+            // Init Audio Theme Box
+            cbxAudioTheme.ItemsSource = Enum.GetValues(typeof(SumoEnumGenerated.Theme_theme)).Cast<SumoEnumGenerated.Theme_theme>();
+            cbxAudioTheme.SelectedIndex = 0;
+            this.cbxAudioTheme.SelectionChanged += CbxAudioTheme_SelectionChanged;
+
+            // Init Default UI
+            cvtTop.IsEnabled = false;
+            cvtRight.IsEnabled = false;
+            image.IsEnabled = false;
+
+            // Set SplashImage
+            Assembly _assembly = Assembly.GetExecutingAssembly();                              
+            SplashImage = BitmapConverter.ToMat(new Bitmap(_assembly.GetManifestResourceStream("SumoApplication.Images.SplashScreen.jpg")));
+            // add HUD logo on Splash Image for testing
+            Mat FinalImage = ImageManipulation.Decorate(SplashImage, new SumoInformations());
+            image.Source = FinalImage.ToWriteableBitmap();
+
+            InitDrone();
+        }
+
+
+        private void InitDrone()
+        {
+            // Create Controller
+            controller = new SumoController(out piloting);
+            controller.ImageAvailable += Controller_ImageAvailable;
+            controller.SumoEvents += Controller_SumoEvents;
 
             // Connect Piloting Events to control Sumo
             piloting.Disconnect += Piloting_Disconnect;
             piloting.Move += Piloting_Move;
             piloting.KeyboardKeysAvailable += Piloting_KeyboardKeysAvailable;
-          
-            cbxAudioTheme.ItemsSource = Enum.GetValues(typeof(SumoEnumGenerated.Theme_theme)).Cast<SumoEnumGenerated.Theme_theme>();
-            cbxAudioTheme.SelectedIndex = 0;
-            this.cbxAudioTheme.SelectionChanged += CbxAudioTheme_SelectionChanged;
+
+            // If you want process video in OpenCV separate window Set EnableOpenCV to true
+            // In this case controller.ImageAvailable is not fired
+            //controller.EnableOpenCV = true;
+
+           
         }
 
-      
+
+        private void InitUI()
+        {
+            cvtTop.IsEnabled = true;
+            cvtRight.IsEnabled = true;
+            image.IsEnabled = true;
+        }
+
+
+        private void InitSoundUI()
+        {                        
+            if (controller.DroneIsCapableOfAudio)
+            {
+                // TODO Init GroupBox
+
+                // Init Sound Box
+                string[] soundsFiles = Directory.EnumerateFiles(@".\Sound", "*.wav", SearchOption.TopDirectoryOnly).Select(x => Path.GetFileName(x)).ToArray();
+                cbxSounds.ItemsSource = soundsFiles;
+
+                // Change StreamDirection
+                controller.SetAudioDroneRX(true);
+            }
+        }
+
+
 
         #region Controller CallBack
         private void Controller_SumoEvents(object sender, SumoEventArgs e)
         {
+            sumoInformations = e.SumoInformations;
             switch(e.TypeOfEvent)
             {
                 case (SumoEnumCustom.TypeOfEvents.AlertEvent):
-                    AlerteStr = e.Alert.ToString();                    
                     break;
-                case (SumoEnumCustom.TypeOfEvents.BatteryLevelEvent):
-                    BatteryLevelStr = e.BatteryLevel + "%";
-
+                case (SumoEnumCustom.TypeOfEvents.BatteryLevelEvent):                    
                     lblBatteryLevel.Dispatcher.BeginInvoke((Action)(() =>
                     {
-                        lblBatteryLevel.Content = e.BatteryLevel + "%";
+                        lblBatteryLevel.Content = sumoInformations.BatteryLevel + "%";
                         
                     }));
                     break;
                 case (SumoEnumCustom.TypeOfEvents.Connected):
                     // Enable Btn
-                    cvtTop.IsEnabled = true;
-                    cvtRight.IsEnabled = true;
-                    image.IsEnabled = true;
+                    InitUI();
+                    InitSoundUI();
                     break;
                 case (SumoEnumCustom.TypeOfEvents.Disconnected):
                     break;
@@ -91,24 +144,22 @@ namespace SumoApplication
                     break;
                 case (SumoEnumCustom.TypeOfEvents.PilotingEvent):
                     break;
-                case (SumoEnumCustom.TypeOfEvents.PostureEvent):
+                case (SumoEnumCustom.TypeOfEvents.PostureEvent):                   
                     lblPostureState.Dispatcher.BeginInvoke((Action)(() =>
                     {
-                        lblPostureState.Content = "Sumo in: " + e.Posture.ToString()+" position";
+                        lblPostureState.Content = "Sumo in: " + sumoInformations.Posture.ToString()+" position";
                     }));
                     break;
                 case (SumoEnumCustom.TypeOfEvents.RSSI):
-                    WifiRssiStr = e.Rssi.ToString() + " dbm";
                     lblRssi.Dispatcher.BeginInvoke((Action)(() =>
                     {
-                        lblRssi.Content = "Wifi Signal : "+ e.Rssi.ToString() +" dbm";                        
+                        lblRssi.Content = "Wifi Signal : "+ sumoInformations.Rssi.ToString() +" dbm";                        
                     }));
                     break;
-                case (SumoEnumCustom.TypeOfEvents.LinkQuality):
-                    WifiQualityStr = e.LinkQuality.ToString() + "/6";
+                case (SumoEnumCustom.TypeOfEvents.LinkQuality):                    
                     lblQuality.Dispatcher.BeginInvoke((Action)(() =>
                     {
-                        lblQuality.Content = "Link Quality: " +e.LinkQuality.ToString() +"/6";
+                        lblQuality.Content = "Link Quality: " +sumoInformations.LinkQuality.ToString() +"/6";
                         
                     }));
                     break;
@@ -116,26 +167,31 @@ namespace SumoApplication
                 case (SumoEnumCustom.TypeOfEvents.VolumeChange):
                     slVolume.Dispatcher.BeginInvoke((Action)(() =>
                     {
-                        slVolume.Value = e.Volume;
+                        slVolume.Value = sumoInformations.Volume;
                     }));
                     break;
             }
 
+            /*
             // Update Info Label
             lblInfo.Dispatcher.BeginInvoke((Action)(() =>
             {
-                lblInfo.Content = String.Format("{0}, {1}, {2}, {3}",BatteryLevelStr, WifiQualityStr, WifiRssiStr, AlerteStr);
+                lblInfo.Content = String.Format("{0}\t{1}\t{2}\t {3}",BatteryLevelStr, WifiQualityStr, WifiRssiStr, AlerteStr);
             }));
+            */
         }
- 
+
+       
+
         private void Controller_ImageAvailable(object sender, ImageEventArgs e)
         {
             image.Dispatcher.BeginInvoke((Action)(() =>
             {
                 DisplayFPS();
                 try
-                {                    
-                    image.Source = e.RawImage.ToWriteableBitmap(PixelFormats.Bgr24);
+                {
+                    var FinalImage = ImageManipulation.Decorate(e.RawImage, sumoInformations);
+                    image.Source = FinalImage.ToWriteableBitmap(PixelFormats.Bgr24);                    
                 }
                 catch
                 {
@@ -188,13 +244,13 @@ namespace SumoApplication
                 case (0x57): // Letter w
                     controller.QuickTurn(ToRadians(180)); //Quick turn right
                     break;
-                case (0x53): // Letter w
+                case (0x53): // Letter s
                     controller.QuickTurn(ToRadians(-180));//Quick turn left
                     break;
                 case (0x41): // Letter a 
                     controller.QuickTurn(ToRadians(-90)); //Quick half turn left
                     break;
-                case (0x44): // Letter d 
+                case (0x44): // Letter d  
                     controller.QuickTurn(ToRadians(90)); //Quick half turn right
                     break;
                                         
@@ -209,7 +265,16 @@ namespace SumoApplication
                     controller.Animation(LibSumo.Net.Protocol.SumoEnumGenerated.SimpleAnimation_id.slowshake);
                     break;
 
-            }            
+                case (0x51): // letter q
+                    controller.Headlight_off();
+                    break;
+                case (0x45): // letter e
+                    controller.Headlight_on();
+                    break;
+
+            }
+
+           
         }
 
         private void Piloting_Move(object sender, MoveEventArgs e)
@@ -286,16 +351,44 @@ namespace SumoApplication
             }));
         }
 
-        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        {   
-            // Inform controller to quit cleanly
-            controller.Disconnect();
-            controller.Dispose();
-        }
+
+       
+
         private void TxtBox_GotFocus(object sender, RoutedEventArgs e)
         {
             FakeTxtBox.Focus();
         }
+
+        private void BtnAudioRecord_Click(object sender, RoutedEventArgs e)
+        {
+            // Send selected Wave to Drone
+            // Not working for the moment
+            MessageBox.Show("Not Working for the moment"); return;
+            string item = cbxSounds.SelectedItem.ToString();
+            if (!string.IsNullOrEmpty(item))
+            {
+                controller.SetAudioDroneRX(true);
+                controller.StreamAudioToDrone(item);
+            }
+        }
+
+        private void SlLight_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            // Send Light level to Drone
+            controller.Headlight_Value(e.NewValue);
+        }
+
+        private void BtnAudioStreamOn_Click(object sender, RoutedEventArgs e)
+        {
+            controller.SetAudioDroneTX(true);
+        }
+
+        private void BtnAudioStreamOff_Click(object sender, RoutedEventArgs e)
+        {
+            controller.SetAudioDroneTX(false);
+        }
+
+
         #endregion
 
         public float ToRadians(float degree)
@@ -303,16 +396,14 @@ namespace SumoApplication
             return (float)((degree / 2 * Math.PI) / 180.0);
         }
 
-      
-
-        private void BtnHeadlightOff_Click(object sender, RoutedEventArgs e)
+        public void Dispose()
         {
-            controller.Headlight_off();
-        }
-
-        private void BtnHeadlightOn_Click(object sender, RoutedEventArgs e)
-        {
-            controller.Headlight_on();
+            // Inform controller to quit cleanly
+            if (controller != null)
+            {
+                controller.Disconnect();
+                controller.Dispose();
+            }
         }
     }     
 

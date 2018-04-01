@@ -2,9 +2,11 @@ using LibSumo.Net.Events;
 using LibSumo.Net.Helpers;
 using LibSumo.Net.Logger;
 using LibSumo.Net.Protocol;
+using LibSumo.Net.Streams;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -25,31 +27,46 @@ namespace LibSumo.Net.Network
         public int Port { get; set; }
         private bool IsConnected { get; set; }
         public int BatteryLevel { get; set; }
+
         #endregion
 
         #region Private Fields
         private object mutex_frames_Lock;
         private IPEndPoint SumoRemote;
-        private SumoSender sender;
-        private UInt16 current_frame_no;
-        private List<byte[]> parts;
-        private List<byte[]> frames;
+        private SumoSender _sender;
+        private SumoInformations _sumoInformations;
+        
+        // Video Frames
+        private UInt16 current_videoframe_no;
+        private List<byte[]> VideoParts;
+        private List<byte[]> VideoFrames;
+
+        // Audio Frames
+        private SumoAudioPlayer _audioPlayer;        
+        private List<byte[]> AudioFrames;
+        
+
         #endregion
 
         #region Constructor
-        public SumoReceiver(string host, int port, SumoSender _sender)
+        public SumoReceiver(string host, int port, SumoSender sender)
         {
 
             this.Host = host;
             this.Port = port;
             
-            this.sender = _sender;
+            this._sender = sender;
             SumoRemote = new IPEndPoint(IPAddress.Any, port);
             this.BatteryLevel = 0;
 
             // Video frames                    
-            this.frames = new List<byte[]>();
+            this.VideoFrames = new List<byte[]>();
             this.mutex_frames_Lock = new object(); // Lock();
+
+            // Audio Frames
+            this.AudioFrames = new List<byte[]>();
+
+            _sumoInformations = new SumoInformations();
         }
 
         #endregion
@@ -125,7 +142,7 @@ namespace LibSumo.Net.Network
                 if (data_type == (byte)SumoConstantsCustom.ARNETWORKAL_FRAME_TYPE.ARNETWORKAL_FRAME_TYPE_DATA_WITH_ACK)
                 {
                     byte[] ack = _create_ack_packet(data_type, buffer_id, seq_no);
-                    this.sender.SendAck(ack);
+                    this._sender.SendAck(ack);
                     //LOGGER.GetInstance.Debug(String.Format("Sending ACK for {0} {1} {2} {3}", data_type, buffer_id, seq_no, frame_size));
                 }
 
@@ -139,8 +156,8 @@ namespace LibSumo.Net.Network
                 if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.common_SettingsState_ProductNameChanged))
                 {
                     // Product name Changed
-                    var name = payload.SubArray("4:");
-                    LOGGER.GetInstance.Info(String.Format("Drone Name: {0}", Encoding.ASCII.GetString(name)));
+                    var name = Encoding.ASCII.GetString(payload.SubArray("4:")).Trim('\0');
+                    LOGGER.GetInstance.Info(String.Format("Drone Name: {0}", name));
                 }
                 else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.common_CommonState_CurrentDateChanged))
                 {
@@ -152,20 +169,16 @@ namespace LibSumo.Net.Network
                     LOGGER.GetInstance.Info(String.Format("Time updated to: {0}", Encoding.ASCII.GetString(time)));
                 } else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.common_CommonState_WifiSignalChanged))
                 {
-                    Int16 rssi = (Int16)StructConverter.Unpack("<h", payload.SubArray("4:"))[0];
-                    var evt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.RSSI)
-                    {
-                        Rssi = rssi
-                    };
+                    Int16 rssi = (Int16)StructConverter.Unpack("<h", payload.SubArray("4:"))[0];                    
+                    _sumoInformations.Rssi = rssi;
+                    var evt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.RSSI, _sumoInformations);
                     OnSumoEvents(evt);
                 }else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.common_CommonState_BatteryStateChanged))
                 {
                     var battery = payload.SubArray("4:5")[0];
                     BatteryLevel = battery;
-                    var BatEvt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.BatteryLevelEvent)
-                    {
-                        BatteryLevel = BatteryLevel
-                    };
+                    _sumoInformations.BatteryLevel = BatteryLevel;
+                    var BatEvt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.BatteryLevelEvent, _sumoInformations);                    
                     OnSumoEvents(BatEvt);
                 }
                 else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.common_CommonState_AllStatesChanged))
@@ -185,6 +198,35 @@ namespace LibSumo.Net.Network
                     var HeadData = StructConverter.Unpack("<BB", payload.SubArray("4:"));
                     LOGGER.GetInstance.Debug(String.Format("Headlight change: {0} {1}", HeadData[0], HeadData[1]));
                 }
+                else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.common_AudioState_AudioStreamingRunning))
+                {
+                    var AudioStateData = payload.SubArray("4:")[0];
+                    if ((AudioStateData & (1 << 0)) != 0)
+                    {
+                        LOGGER.GetInstance.Info(String.Format("Drone is ready to stream to controller (Drone TX ON)"));
+                        if (_audioPlayer != null)
+                        {
+                            _audioPlayer.Start();
+                        }
+                    }
+                    else if ((AudioStateData & (1 << 0)) == 0)
+                    {
+                        LOGGER.GetInstance.Info(String.Format("Drone has cancelled to stream to controller (Drone TX OFF)"));
+                        if (_audioPlayer != null)
+                        {
+                            _audioPlayer.Stop();
+                        }                        
+                    }
+
+                    if ((AudioStateData & (1 << 1)) != 0)
+                    {
+                        LOGGER.GetInstance.Info(String.Format("Drone is ready to receive stream from Controller (Drone RX ON)"));
+                    }
+                    else if ((AudioStateData & (1 << 1)) == 0)
+                    {
+                        LOGGER.GetInstance.Info(String.Format("Drone has cancelled to receive stream from Controller (Drone RX OFF)"));
+                    }
+                }
                 else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.jpsumo_PilotingState_SpeedChanged))
                 {
                     var Result2 = StructConverter.Unpack("<bh", payload.SubArray("4:"));
@@ -196,10 +238,8 @@ namespace LibSumo.Net.Network
                 {
                     var state = (Int32)StructConverter.Unpack("<i", payload.SubArray("4:"))[0];
                     LOGGER.GetInstance.Debug(String.Format("State of posture changed: {1} ({0})", state, (SumoEnumGenerated.PostureChanged_state)state).ToString());
-                    var evt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.PostureEvent)
-                    {
-                        Posture = (SumoEnumGenerated.PostureChanged_state)state
-                    };
+                    _sumoInformations.Posture = (SumoEnumGenerated.PostureChanged_state)state;
+                    var evt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.PostureEvent, _sumoInformations);                                        
                     OnSumoEvents(evt);
                 }
                 else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.jpsumo_AnimationsState_JumpLoadChanged))
@@ -220,10 +260,8 @@ namespace LibSumo.Net.Network
                 else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.jpsumo_NetworkState_LinkQualityChanged))
                 {
                     var linkQuality = (byte)StructConverter.Unpack("<B", payload.SubArray("4:"))[0];
-                    var evt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.LinkQuality)
-                    {
-                        LinkQuality = linkQuality
-                    };
+                    _sumoInformations.LinkQuality = linkQuality;
+                    var evt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.LinkQuality, _sumoInformations);                                        
                     OnSumoEvents(evt);
                 }
                 else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.jpsumo_MediaStreamingState_VideoEnableChanged))
@@ -235,19 +273,15 @@ namespace LibSumo.Net.Network
                 {
                     var VolumeState = (byte)payload.SubArray("4:")[0];
                     //LOGGER.GetInstance.Info(String.Format("Volume state is: {0}", VolumeState));
-                    var evt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.VolumeChange)
-                    {
-                        Volume = VolumeState
-                    };
+                    _sumoInformations.Volume = VolumeState;
+                    var evt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.VolumeChange, _sumoInformations);                                        
                     OnSumoEvents(evt);
                 }
                 else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.jpsumo_PilotingState_AlertStateChanged))
                 {
                     var state = (Int32)StructConverter.Unpack("<i", payload.SubArray("4:"))[0];
-                    var evt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.AlertEvent)
-                    {
-                        Alert = (SumoEnumGenerated.AlertStateChanged_state)state
-                    };
+                    _sumoInformations.Alert = (SumoEnumGenerated.AlertStateChanged_state)state;
+                    var evt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.AlertEvent, _sumoInformations);                                                                
                     OnSumoEvents(evt);
                 }
                 else
@@ -267,6 +301,12 @@ namespace LibSumo.Net.Network
             }
         }
 
+        internal void EnableRXAudioProcessing(SumoAudioPlayer audioPlayer)
+        {
+            this._audioPlayer = audioPlayer;
+            this._audioPlayer.ConfigureCodec();            
+        }
+
         private void _process_stream_frame(byte buffer_id, UInt32 frame_size, byte[] payload)
         {
             if (buffer_id == SumoConstantsCustom.NETWORK_DC_VIDEO_DATA_ID)
@@ -278,39 +318,64 @@ namespace LibSumo.Net.Network
                 byte frags_per_frame = (byte)Result[3];
                 byte[] fragment = payload.SubArray("5:");
                 // We got a fragment for a different frame
-                if (frame_no != this.current_frame_no)
+                if (frame_no != this.current_videoframe_no)
                 {
                     // Reset frame number and fragment buffer
-                    this.current_frame_no = frame_no;
-                    this.parts = new List<byte[]>(frags_per_frame); //{ null } * frags_per_frame;
+                    this.current_videoframe_no = frame_no;
+                    this.VideoParts = new List<byte[]>(frags_per_frame); //{ null } * frags_per_frame;
                 }
-                if (parts != null)
+                if (VideoParts != null)
                 {
-                    if (this.parts.Count >= frag_no + 1)
+                    if (this.VideoParts.Count >= frag_no + 1)
                     {
-                        if (this.parts.ElementAt(frag_no) != null)
+                        if (this.VideoParts.ElementAt(frag_no) != null)
                         {
-                            LOGGER.GetInstance.Debug(String.Format("Duplicate fragment | Frame: {0}, Fragment: {1}", frame_no, frag_no));
+                            LOGGER.GetInstance.Debug(String.Format("[Video] Duplicate fragment | Frame: {0}, Fragment: {1}", frame_no, frag_no));
                             return;
                         }
                     }
 
-                    this.parts.Add(fragment);
+                    this.VideoParts.Add(fragment);
 
                     // We've received the entire frame
-                    if (!this.parts.Contains(null))
+                    if (!this.VideoParts.Contains(null))
                     {
                         lock (mutex_frames_Lock)
                         {
-                            this.frames.Add(this.parts.SelectMany(a => a).ToArray());
+                            this.VideoFrames.Add(this.VideoParts.SelectMany(a => a).ToArray());
                         }
                     }
-
-
                 }
-            }else if (buffer_id == SumoConstantsCustom.NETWORK_DC_SOUND_DATA_ID)
+            }else if (buffer_id == SumoConstantsCustom.NETWORK_DC_SOUND_DATA_ID && _audioPlayer!=null)
             {   // Process Audio stream on Night/Race Drone
-                LOGGER.GetInstance.Debug(String.Format("Received Audio Stream ! "));
+                //LOGGER.GetInstance.Debug(String.Format("Received Audio Stream ! "));
+
+                var Result = StructConverter.Unpack("<HBBB", payload.SubArray(":5"));
+                UInt16 frame_no = (UInt16)Result[0];
+                byte frame_flags = (byte)Result[1];
+                byte frag_no = (byte)Result[2];
+                byte frags_per_frame = (byte)Result[3];
+
+                // Originaly 5: , I think first 4 byte is for Audio information... or frame Header ? I dont know...
+                // maybe because Audio Frame = HEADER_SIZE = 16 + DATA_SIZE = 256
+                // From : https://github.com/Parrot-Developers/libARController/blob/master/JNI/java/com/parrot/arsdk/arcontroller/ARAudioFrame.java
+                // https://github.com/Parrot-Developers/libARController/blob/master/Sources/ARCONTROLLER_AudioHeader.h
+                // So Skip 16 first byte (5 frame header + 11 Audio Header)
+                byte[] fragment = payload.SubArray("16:");
+                
+
+                // Write it in the shared Stream               
+                _audioPlayer.OnDataReceived(fragment);
+
+                // Debug
+                //byte[] AudioHeader = payload.SubArray(":16");
+                //var r = StructConverter.Unpack("<QHHI", AudioHeader);
+
+                //using (var stream = new FileStream("AudioHeader.dat", FileMode.Append))
+                //{
+                    //stream.Write(fragment, 0, fragment.Length);
+                    //stream.Write(new byte[] { 0xff, 0xff, 0xff, 0xff }, 0, 4);
+                //}                
             }
             else
             {
@@ -386,12 +451,12 @@ namespace LibSumo.Net.Network
         {
             lock (mutex_frames_Lock)
             {
-                if (this.frames.Count == 0)
+                if (this.VideoFrames.Count == 0)
                 {
                     return null;
                 }
-                var frame = this.frames.Last();
-                this.frames = new List<byte[]>();
+                var frame = this.VideoFrames.Last();
+                this.VideoFrames = new List<byte[]>();
                 return frame;
             }
         }

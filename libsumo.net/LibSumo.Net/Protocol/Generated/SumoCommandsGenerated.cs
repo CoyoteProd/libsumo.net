@@ -173,7 +173,7 @@ namespace LibSumo.Net.Protocol
         /// </summary>
         public static byte[] Mavlink_Start_cmd(String filepath, SumoEnumGenerated.Start_type type)
         {
-            return StructConverter.Pack("<BBHsB", 0, 11, 0, filepath, (UInt16)type);
+            return StructConverter.Pack("<BBHsI", 0, 11, 0, filepath, (UInt16)type);
         }
 
         /// <summary>
@@ -285,7 +285,7 @@ namespace LibSumo.Net.Protocol
         /// </summary>
         public static byte[] Animations_StartAnimation_cmd(SumoEnumGenerated.StartAnimation_anim anim)
         {
-            return StructConverter.Pack("<BBHB", 0, 24, 0, (UInt16)anim);
+            return StructConverter.Pack("<BBHI", 0, 24, 0, (UInt16)anim);
         }
 
         /// <summary>
@@ -298,7 +298,7 @@ namespace LibSumo.Net.Protocol
         /// </summary>
         public static byte[] Animations_StopAnimation_cmd(SumoEnumGenerated.StopAnimation_anim anim)
         {
-            return StructConverter.Pack("<BBHB", 0, 24, 1, (UInt16)anim);
+            return StructConverter.Pack("<BBHI", 0, 24, 1, (UInt16)anim);
         }
 
         /// <summary>
@@ -326,7 +326,7 @@ namespace LibSumo.Net.Protocol
         /// </summary>
         public static byte[] Accessory_Config_cmd(SumoEnumGenerated.Config_accessory accessory)
         {
-            return StructConverter.Pack("<BBHB", 0, 26, 0, (UInt16)accessory);
+            return StructConverter.Pack("<BBHI", 0, 26, 0, (UInt16)accessory);
         }
 
         /// <summary>
@@ -362,7 +362,7 @@ namespace LibSumo.Net.Protocol
         /// </summary>
         public static byte[] Piloting_Posture_cmd(SumoEnumGenerated.Posture_type type)
         {
-            return StructConverter.Pack("<BBHB", 3, 0, 1, (UInt16)type);
+            return StructConverter.Pack("<BBHI", 3, 0, 1, (UInt16)type);
         }
 
         /// <summary>
@@ -424,7 +424,7 @@ namespace LibSumo.Net.Protocol
         /// </summary>
         public static byte[] Animations_Jump_cmd(SumoEnumGenerated.Jump_type type)
         {
-            return StructConverter.Pack("<BBHB", 3, 2, 3, (UInt16)type);
+            return StructConverter.Pack("<BBHI", 3, 2, 3, (UInt16)type);
         }
 
         /// <summary>
@@ -437,7 +437,7 @@ namespace LibSumo.Net.Protocol
         /// </summary>
         public static byte[] Animations_SimpleAnimation_cmd(SumoEnumGenerated.SimpleAnimation_id id)
         {
-            return StructConverter.Pack("<BBHB", 3, 2, 4, (UInt16)id);
+            return StructConverter.Pack("<BBHI", 3, 2, 4, (UInt16)id);
         }
 
         /// <summary>
@@ -462,7 +462,7 @@ namespace LibSumo.Net.Protocol
         /// </summary>
         public static byte[] MediaRecord_VideoV2_cmd(SumoEnumGenerated.VideoV2_record record)
         {
-            return StructConverter.Pack("<BBHB", 3, 6, 3, (UInt16)record);
+            return StructConverter.Pack("<BBHI", 3, 6, 3, (UInt16)record);
         }
 
         /// <summary>
@@ -475,7 +475,7 @@ namespace LibSumo.Net.Protocol
         /// </summary>
         public static byte[] NetworkSettings_WifiSelection_cmd(SumoEnumGenerated.WifiSelection_type type, SumoEnumGenerated.WifiSelection_band band, byte channel)
         {
-            return StructConverter.Pack("<BBHBBB", 3, 8, 0, (UInt16)type, (UInt16)band, channel);
+            return StructConverter.Pack("<BBHIIB", 3, 8, 0, (UInt16)type, (UInt16)band, channel);
         }
 
         /// <summary>
@@ -488,7 +488,7 @@ namespace LibSumo.Net.Protocol
         /// </summary>
         public static byte[] Network_WifiScan_cmd(SumoEnumGenerated.WifiScan_band band)
         {
-            return StructConverter.Pack("<BBHB", 3, 10, 0, (UInt16)band);
+            return StructConverter.Pack("<BBHI", 3, 10, 0, (UInt16)band);
         }
 
         /// <summary>
@@ -526,7 +526,7 @@ namespace LibSumo.Net.Protocol
         /// </summary>
         public static byte[] AudioSettings_Theme_cmd(SumoEnumGenerated.Theme_theme theme)
         {
-            return StructConverter.Pack("<BBHB", 3, 12, 1, (UInt16)theme);
+            return StructConverter.Pack("<BBHI", 3, 12, 1, (UInt16)theme);
         }
 
         /// <summary>

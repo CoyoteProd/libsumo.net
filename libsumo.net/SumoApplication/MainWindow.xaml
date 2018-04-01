@@ -6,11 +6,11 @@
         xmlns:local="clr-namespace:SumoApplication"
         mc:Ignorable="d"
         MinHeight="600" MinWidth="1024"
-        Title="MainWindow"  Width="1024" Height="600" Closing="Window_Closing">
+        Title="MainWindow"  Width="1024" Height="600">
     <Grid>
         <DockPanel  LastChildFill="True">
 
-            <Canvas Name="cvtTop" IsEnabled="False" DockPanel.Dock="Top"  Height="50">
+            <Canvas Name="cvtTop"  DockPanel.Dock="Top"  Height="50">
                 <Label x:Name="lblFramerate" Content="Framerate" Canvas.Left="17" Canvas.Top="3" />
                 <Button x:Name="btnLongJump" Content="Long Jump"  Width="75" Canvas.Left="109" Canvas.Top="19" Click="BtnLongJump_Click"/>
                 <Button x:Name="btnHighJump" Content="High Jump"  Width="75" Canvas.Left="209" Canvas.Top="19" Click="BtnHighJump_Click"/>
@@ -26,28 +26,37 @@
             <Canvas Width="100">
                 <Button Name="btnConnect" Content="Connect"  Width="75" Click="BtnConnect_Click" Canvas.Left="10" Canvas.Top="11"/>
                 <Button Name="btnDisconnect" Content="Disconnect"  Width="75" Click="BtnDisconnect_Click" Canvas.Left="10" Canvas.Top="41"/>
-                <Button Name="btnHeadlightOn" Content="Light On"  Width="75" Click="BtnHeadlightOn_Click" Canvas.Left="10" Canvas.Top="90"/>
-                <Button Name="btnHeadlightOff" Content="Light Off"  Width="75" Click="BtnHeadlightOff_Click" Canvas.Left="10" Canvas.Top="120"/>
                 <Button Name="btnSaveLog" Content="Save log" Width="75" Click="BtnSaveLog_Click" Canvas.Left="10" Canvas.Top="376"/>
                 <TextBox Name="FakeTxtBox" Height="23" Canvas.Left="23" TextWrapping="Wrap"  Canvas.Top="467" Width="34" Opacity="0"/>
             </Canvas>
 
             <TextBox DockPanel.Dock="Bottom" Height="150" Name="txtBox" TextWrapping="NoWrap" Text="" GotFocus="TxtBox_GotFocus"  />
 
-            <Canvas Name="cvtRight" IsEnabled="False" DockPanel.Dock="Right" Width="250">
+            <Canvas Name="cvtRight"  DockPanel.Dock="Right" Width="502">
                 <Slider Name="HSlider" HorizontalAlignment="Left" VerticalAlignment="Top" Width="186" Maximum="50" Minimum="-50" Canvas.Left="12" Canvas.Top="99"/>
                 <Slider Name="VSlider" HorizontalAlignment="Left" VerticalAlignment="Top" Width="22" Maximum="127" Minimum="-127" Orientation="Vertical" Height="161" Canvas.Left="95" Canvas.Top="28"/>
                 <Label Name="Vlbl" Content="Label" HorizontalAlignment="Left" VerticalAlignment="Top" Canvas.Left="87" Canvas.Top="9"/>
                 <Label Name="Hlbl" Content="Label" HorizontalAlignment="Left" VerticalAlignment="Top" Canvas.Left="194" Canvas.Top="94"/>
+                
+                <GroupBox Header="Night/Diesel" Height="179" Canvas.Left="262" Canvas.Top="10" Width="230">
+                    <Canvas>
+                        <Button x:Name="btnAudioStreamOn" Content="Audio On"  Width="75" Click="BtnAudioStreamOn_Click" Canvas.Left="10" Canvas.Top="10"/>
+                        <Button x:Name="btnAudioStreamOff" Content="Audio Off"  Width="75" Click="BtnAudioStreamOff_Click" Canvas.Left="90" Canvas.Top="10"/>
+                        <ComboBox x:Name="cbxSounds" HorizontalAlignment="Left" VerticalAlignment="Top" Width="155" Canvas.Left="10" Canvas.Top="50"/>
+                        <Button x:Name="btnAudioRecord" Content="Send Sound"  Width="155" Click="BtnAudioRecord_Click" Canvas.Left="10" Canvas.Top="77"/>
+                        <Slider x:Name="slLight"  Canvas.Left="53" Canvas.Top="123" Width="112" ValueChanged="SlLight_ValueChanged" Maximum="255" SmallChange="0"/>
+                        <Label Content="Light :" Canvas.Left="10" Canvas.Top="117"/>
+                    </Canvas>
+                </GroupBox>
+
+            </Canvas>
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
                 <Label x:Name="lblBatteryLevel" Content="BatteryLevel : N/A" Canvas.Left="25" Canvas.Top="212" RenderTransformOrigin="1.347,1.974" />
                 <Label x:Name="lblRssi" Content="Rssi : N/A" Canvas.Left="25" Canvas.Top="243" />
                 <Label x:Name="lblPostureState" Content="PostureStateName : N/A" Canvas.Left="25" Canvas.Top="300" />
                 <Label x:Name="lblQuality" Content="Quality link: N/A" Canvas.Left="25" Canvas.Top="269" />
-            </Canvas>
-            <DockPanel>
-                <Label x:Name="lblInfo" Content="infos" DockPanel.Dock="Top" />
-                <Image  Name="image" IsEnabled="False" Source="1200x630bb_Wfq_icon.ico"/>
-            </DockPanel>
+            </StackPanel>
+            <Image  Name="image"/>
         </DockPanel>
     </Grid>
 </Window>

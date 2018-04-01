@@ -3,7 +3,7 @@ using LibSumo.Net.Events;
 using LibSumo.Net.Logger;
 using LibSumo.Net.Network;
 using LibSumo.Net.Protocol;
-using LibSumo.Net.Video;
+using LibSumo.Net.Streams;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Net.NetworkInformation;
@@ -29,7 +29,9 @@ namespace LibSumo.Net
         private int fragments_per_frame;
 
         private SumoReceiver receiver;
-        private SumoDisplay display;
+        private SumoVideo video;
+        private SumoAudioPlayer audioPlayer;
+        private SumoAudioRecorder audioRecorder;
         private SumoSender sender;
         private SumoKeyboardPiloting piloting;
         
@@ -42,6 +44,11 @@ namespace LibSumo.Net
         /// </summary>
         public bool EnableOpenCV { private get; set; }
         public bool IsConnected { get; set; }
+        public bool DroneIsCapableOfAudio { get; set; }
+
+        private bool CurrentDroneRX { get; set; }
+        private bool CurrentDroneTX { get; set; }
+        public SumoInformations SumoInformations { get; set; }
         #endregion
 
         #region Constructor
@@ -59,7 +66,8 @@ namespace LibSumo.Net
             _piloting = new SumoKeyboardPiloting();
             piloting = _piloting;
             EnableOpenCV = false;
-
+            SumoInformations = new SumoInformations();
+            
             // Start Discover
             StartDiscoverThread();
         }
@@ -78,8 +86,10 @@ namespace LibSumo.Net
             // Start Discover
             StartDiscoverThread();
         }
+
+       
         #endregion
-        
+
         #region Private Methods
         /// <summary>
         /// Initiates discovery with the jumping sumo (via TCP)
@@ -89,8 +99,8 @@ namespace LibSumo.Net
         {
 
             LOGGER.GetInstance.Info("Connecting to Jumping sumo...");
-            //string strInitMsg = @"{ ""controller_type"":""computer"", ""controller_name"":""a5xelte"", ""d2c_port"":""" + d2c_port + @"""}";
-            string strInitMsg = @"{ ""controller_type"":""a5xelte"", ""controller_name"":""SM-A510F"", ""d2c_port"":"+ d2c_port + @",""audio_codec"":3,""arstream2_client_stream_port"":55004,""arstream2_client_control_port"":55005}";
+            string strInitMsg = @"{ ""controller_type"":""computer"", ""controller_name"":""vilcoyote"", ""d2c_port"":""" + d2c_port + @"""}";
+            //string strInitMsg = @"{ ""controller_type"":""a5xelte"", ""controller_name"":""SM-A510F"", ""d2c_port"":"+ d2c_port + @",""audio_codec"":3,""arstream2_client_stream_port"":55004,""arstream2_client_control_port"":55005}";
             try
             {
                 TcpClient tcpSocket = new TcpClient();
@@ -144,7 +154,7 @@ namespace LibSumo.Net
                         PingReply reply = pinger.Send(deviceIp, 100);
                         if (reply.Status == IPStatus.Success)
                         {                            
-                            OnSumoEvents(new SumoEventArgs(SumoEnumCustom.TypeOfEvents.Discovered));
+                            OnSumoEvents(new SumoEventArgs(SumoEnumCustom.TypeOfEvents.Discovered, null));
                             Ping_Should_run = false;
                         }
                     }
@@ -181,19 +191,31 @@ namespace LibSumo.Net
             if (IsConnected)
             {
                 this.sender = new SumoSender(this.deviceIp, this.c2d_port);
-                this.receiver = new SumoReceiver(this.deviceIp, this.d2c_port, this.sender);
-                //this.receiver.BatteryLevelAvailable += Receiver_BatteryLevelAvailable;
+                this.receiver = new SumoReceiver(this.deviceIp, this.d2c_port, this.sender);                
                 this.receiver.SumoEvents += Receiver_SumoEvents;
+                
                 // Set Video
-                this.display = new SumoDisplay(this.receiver);
-                display.ImageInSeparateOpenCVWindow = EnableOpenCV;
-                this.display.ImageAvailable += Display_ImageAvailable;
+                this.video = new SumoVideo(this.receiver);
+                video.ImageInSeparateOpenCVWindow = EnableOpenCV;
+                this.video.ImageAvailable += Display_ImageAvailable;
+
+                // TODO : Check if Device is capable
+                // And Set properties DroneIsCapableOfAudio
+                DroneIsCapableOfAudio = true;
+                if (DroneIsCapableOfAudio)
+                {
+                    // Set Audio
+                    this.audioPlayer = new SumoAudioPlayer();
+                    this.receiver.EnableRXAudioProcessing(this.audioPlayer);
+                    this.audioRecorder = new SumoAudioRecorder(this.sender);
+
+                }
 
                 // Run Threads
                 this.receiver.RunThread();
                 this.sender.RunThread();
                 this.sender.Init();
-                this.display.RunThread();
+                this.video.RunThread();
                 if (this.piloting != null)
                 {
                     this.piloting.InstallHook();
@@ -204,7 +226,7 @@ namespace LibSumo.Net
                 EnableVideo();  
 
                 // Inform UI that is connected                
-                OnSumoEvents(new SumoEventArgs(SumoEnumCustom.TypeOfEvents.Connected));
+                OnSumoEvents(new SumoEventArgs(SumoEnumCustom.TypeOfEvents.Connected, null));
             }
             return IsConnected;
         }
@@ -222,9 +244,9 @@ namespace LibSumo.Net
         {
             if (IsConnected)
             {
-                if (this.display != null)
+                if (this.video != null)
                 {
-                    this.display.Disconnect();
+                    this.video.Disconnect();
                 }
                 if (this.sender != null)
                 {
@@ -234,6 +256,8 @@ namespace LibSumo.Net
                 {
                     this.receiver.Disconnect();
                 }
+                if (this.audioPlayer != null)
+                    this.audioPlayer.Disconnect();
             }
         }
 
@@ -297,6 +321,7 @@ namespace LibSumo.Net
         {
             this.sender.Send(SumoCommandsGenerated.AudioSettings_MasterVolume_cmd(Volume));// Commands.Volume_cmd(Volume));
         }
+
         public void SetAudioTheme(SumoEnumGenerated.Theme_theme AudioTheme)
         {
             this.sender.Send(SumoCommandsGenerated.AudioSettings_Theme_cmd(AudioTheme)); // Commands.AudioTheme_cmd(AudioTheme));
@@ -325,9 +350,69 @@ namespace LibSumo.Net
         {
             this.sender.Send(SumoCommandsGenerated.Headlights_intensity_cmd(0, 0)); // Commands.Set_Headlight(0, 0));
         }
-       
+
+        public void Headlight_Value(double newValue)
+        {
+            byte v = (byte)Convert.ToUInt16(newValue);
+            this.sender.Send(SumoCommandsGenerated.Headlights_intensity_cmd(v, v));
+        }
+
+        public void StreamAudioToDrone(string item)
+        {            
+            this.audioRecorder.Start(item);
+        }
+               
+        /// <summary>
+        /// Set Audio Streram Direction if drone is capable
+        /// </summary>
+        /// <param name="DroneTX">Drone can send recorded audio</param>
+        /// <param name="DroneRX">Drone can Speak Audio</param>
+        private bool SetAudioStreamDirection(bool DroneRX, bool DroneTX)
+        {
+            if (this.DroneIsCapableOfAudio)
+            {
+                byte data = Encodebool(new bool[] { false, false, false, false, false, false, DroneRX, DroneTX });
+                this.sender.Send(SumoCommandsGenerated.Audio_ControllerReadyForStreaming_cmd(data));
+                return true;
+            }
+            else return false;
+        }
+
+        /// <summary>
+        /// Set Audio Streram Direction if drone is capable
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns>true if operation is possible</returns>
+        public bool SetAudioDroneTX(bool v)
+        {
+            CurrentDroneTX = v;
+            return SetAudioStreamDirection(CurrentDroneRX, CurrentDroneTX);
+        }
+
+        /// <summary>
+        /// Set Audio Streram Direction if drone is capable
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns>true if operation is possible</returns>
+        public bool SetAudioDroneRX(bool v)
+        {
+            CurrentDroneRX = v;
+            return SetAudioStreamDirection(CurrentDroneRX, CurrentDroneTX);
+        }
+
+        private byte Encodebool(bool[] arr)
+        {
+            byte val = 0;
+            foreach (bool b in arr)
+            {
+                val <<= 1;
+                if (b) val |= 1;
+            }
+            return val;
+        }
+
         #endregion
-       
+
         internal void EnableVideo()
         {
             this.sender.Send(SumoCommandsGenerated.MediaStreaming_VideoEnable_cmd(1));// Commands.Set_media_streaming_cmd(true));            

@@ -11,7 +11,7 @@
     <PackageProjectUrl>https://github.com/CoyoteProd/libsumo.net</PackageProjectUrl>
     <RepositoryUrl>ttps://github.com/CoyoteProd/libsumo.net</RepositoryUrl>
     <PackageTags>Parrot Sumo Jumping Jumpingsumo minidrone libsumo</PackageTags>
-    <Version>1.0.4</Version>
+    <Version>1.1.6</Version>
     <PackageReleaseNotes>First full working .Net Parrot Jumping Sumo library.
 Feature:
  - Full working integration of video in WPF application (Ready to be used with OpenCV)
@@ -19,9 +19,9 @@ Feature:
  - Postures, Animations, Jumps implemented
  - Events (Rssi, PostureState, Battery Level...) 
  - Set Volume and AudioTheme 
- - Nuget package available</PackageReleaseNotes>
-    <AssemblyVersion>1.0.4.0</AssemblyVersion>
-    <FileVersion>1.0.4.0</FileVersion>
+ - Headlight support for Night version</PackageReleaseNotes>
+    <AssemblyVersion>1.1.6.0</AssemblyVersion>
+    <FileVersion>1.1.6.0</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -38,8 +38,24 @@ Feature:
 
   <ItemGroup>
     <PackageReference Include="log4net" Version="2.0.8" />
-    <PackageReference Include="Newtonsoft.Json" Version="11.0.1" />
+    <PackageReference Include="NAudio" Version="1.8.4" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="OpenCvSharp3-AnyCPU" Version="3.4.1.20180319" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

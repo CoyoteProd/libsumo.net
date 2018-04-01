@@ -47,6 +47,9 @@
     <Reference Include="log4net, Version=2.0.8.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
       <HintPath>..\packages\log4net.2.0.8\lib\net45-full\log4net.dll</HintPath>
     </Reference>
+    <Reference Include="NAudio, Version=1.8.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\NAudio.1.8.4\lib\net35\NAudio.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.11.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
@@ -83,6 +86,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Video\ImageManipulation.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -139,6 +143,31 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="1200x630bb_Wfq_icon.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Images\icons8-low-battery-0.png" />
+    <EmbeddedResource Include="Images\icons8-low-battery-1.png" />
+    <EmbeddedResource Include="Images\icons8-low-battery-2.png" />
+    <EmbeddedResource Include="Images\icons8-low-battery-3.png" />
+    <EmbeddedResource Include="Images\icons8-low-battery-4.png" />
+    <EmbeddedResource Include="Images\icons8-signal-filled-0.png" />
+    <EmbeddedResource Include="Images\icons8-signal-filled-1.png" />
+    <EmbeddedResource Include="Images\icons8-signal-filled-2.png" />
+    <EmbeddedResource Include="Images\icons8-signal-filled-3.png" />
+    <EmbeddedResource Include="Images\icons8-signal-filled-4.png" />
+    <EmbeddedResource Include="Images\product_0902_posture_icn_jumper.png" />
+    <EmbeddedResource Include="Images\product_0902_posture_icn_kicker.png" />
+    <EmbeddedResource Include="Images\product_0902_posture_icn_standing.png" />
+    <EmbeddedResource Include="Images\SplashScreen.jpg" />
+    <EmbeddedResource Include="Images\wifi-signal-0.png" />
+    <EmbeddedResource Include="Images\wifi-signal-1.png" />
+    <EmbeddedResource Include="Images\wifi-signal-2.png" />
+    <EmbeddedResource Include="Images\wifi-signal-3.png" />
+    <EmbeddedResource Include="Images\wifi-signal-4.png" />
+    <EmbeddedResource Include="Images\wifi-signal-5.png" />
+    <Content Include="Sound\OH_HO_NO.wav">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

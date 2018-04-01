@@ -137,6 +137,24 @@ namespace LibSumo.Net.Network
                 if (cmd != null)
                     sumoSocket.Send(cmd, cmd.Length, SumoRemote);                                               
         }
+        
+        /// <summary>
+        /// Immediately Send Audio Stream
+        /// </summary>
+        /// <param name="AudioData"></param>
+        public void SendAudioFrame(byte[] AudioData)
+        {
+            if(isConnected)
+            {
+                if(AudioData!=null)
+                {
+                    byte[] AudioHeader = StructConverter.Pack("<QHHI", new Object[] { (UInt64)0, (UInt32)0, (UInt32)0, (UInt16)0 });
+                    byte[] AudioFrame = AudioHeader.Concat(AudioData).ToArray();
+                    this.Send(AudioFrame);
+                }
+            }
+        }
+
         public void RunThread()
         {
             isConnected = true;

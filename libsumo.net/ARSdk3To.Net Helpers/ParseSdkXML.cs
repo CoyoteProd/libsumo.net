@@ -281,7 +281,7 @@ namespace ARSdk3To.Net_Helpers
                                 argDefStr += "byte";
                                 break;
                             case ("enum"):
-                                strf += "B";
+                                strf += "I";
                                 argDefStr += "SumoEnumGenerated." + a.EnumType;
                                 break;
                             case ("i8"): strf += "b";

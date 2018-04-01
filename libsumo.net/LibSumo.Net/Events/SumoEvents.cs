@@ -40,27 +40,30 @@ namespace LibSumo.Net.Events
 
         }
     }
+    public class AudioEventArgs : System.EventArgs
+    {
     
+        public byte[] CurrentFrame { get; set; }
+        public AudioEventArgs(byte[] _currentFrame)
+        {
+            this.CurrentFrame = _currentFrame;            
+        }
+    }
 
     /// <summary>
     /// General purpose Arguments for Sumo Changes
     /// </summary>
     public class SumoEventArgs : System.EventArgs
     {
-        public SumoEnumGenerated.PostureChanged_state Posture { get; set; }
-        public int BatteryLevel { get; set; }
-        public int Rssi { get; set; }
-        public int LinkQuality { get; set; }
-        public SumoEnumGenerated.AlertStateChanged_state Alert { get; set; }
-        public sbyte Speed { get; set; }
-        public sbyte Turn { get; set; }
-
+        
         public SumoEnumCustom.TypeOfEvents TypeOfEvent { get; set; }
-        public byte Volume { get; internal set; }
+        
+        public SumoInformations SumoInformations { get; set; }
 
-        public SumoEventArgs(SumoEnumCustom.TypeOfEvents _typeOfEvents)
+        public SumoEventArgs(SumoEnumCustom.TypeOfEvents _typeOfEvents, SumoInformations si)
         {
             TypeOfEvent = _typeOfEvents;
+            SumoInformations = si;
         }
 
     }
