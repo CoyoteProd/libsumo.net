@@ -31,7 +31,7 @@ SumoApplication Feature:
  - {ESC} : Disconnect
 
 [![Sumoapplication][1]][1]
-  [1]: https://i.stack.imgur.com/gNtyJ.png
+  [1]: https://github.com/CoyoteProd/libsumo.net/blob/master/screenshot.jpg
 
   
 Have fun !
