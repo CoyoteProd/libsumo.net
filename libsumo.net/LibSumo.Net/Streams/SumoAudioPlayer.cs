@@ -18,7 +18,7 @@ namespace LibSumo.Net.Streams
 
         public SumoAudioPlayer()
         {            
-            var waveFormat = new WaveFormat(16000, 16, 1);
+            var waveFormat = new WaveFormat(8000, 16, 1);
             buffer = new BufferedWaveProvider(waveFormat)
             {
                 BufferDuration = TimeSpan.FromSeconds(10),

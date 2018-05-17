@@ -5,49 +5,63 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:SumoApplication"
         mc:Ignorable="d"
-        MinHeight="600" MinWidth="1024"
+        MinHeight="630" MinWidth="1024"
         Title="MainWindow"  Width="1024" Height="600">
     <Grid>
         <DockPanel  LastChildFill="True">
 
-            <Canvas Name="cvtTop"  DockPanel.Dock="Top"  Height="50">
+            <Canvas Name="panelJump"  DockPanel.Dock="Top"  Height="50">
                 <Label x:Name="lblFramerate" Content="Framerate" Canvas.Left="17" Canvas.Top="3" />
                 <Button x:Name="btnLongJump" Content="Long Jump"  Width="75" Canvas.Left="109" Canvas.Top="19" Click="BtnLongJump_Click"/>
                 <Button x:Name="btnHighJump" Content="High Jump"  Width="75" Canvas.Left="209" Canvas.Top="19" Click="BtnHighJump_Click"/>
                 <Button x:Name="btnKick" Content="Load Spring"  Width="75" Canvas.Left="309" Canvas.Top="19" Click="BtnKick_Click" ToolTip="Only in Kicker Posture (F2). Press LongJump to release"/>
                 <Button x:Name="btnCancelJump" Content="Cancel Jump"  Width="75" Canvas.Left="409" Canvas.Top="19" Click="BtnCancelJump_Click"/>
                 <Button x:Name="btnSTOP" Content="STOP"  Width="75" Click="BtnSTOP_Click" Canvas.Left="514" Canvas.Top="19" ToolTip="Emergency Stop. Stop all action of JumpingSumo and Stay Here"/>
-                <Slider x:Name="slVolume" Maximum="100" Canvas.Left="770" Canvas.Top="25" Width="89" Thumb.DragCompleted="SlVolume_DragCompleted"/>
-                <Label Content="Volume" Canvas.Left="770" Canvas.Top="1"/>
-                <ComboBox x:Name="cbxAudioTheme" Canvas.Left="875" Canvas.Top="22" Width="120"/>
-                <Label Content="Audio Theme" Canvas.Left="872" Canvas.Top="1"/>
             </Canvas>
 
             <Canvas Width="100">
                 <Button Name="btnConnect" Content="Connect"  Width="75" Click="BtnConnect_Click" Canvas.Left="10" Canvas.Top="11"/>
                 <Button Name="btnDisconnect" Content="Disconnect"  Width="75" Click="BtnDisconnect_Click" Canvas.Left="10" Canvas.Top="41"/>
+                <StackPanel x:Name="stckPanel" Height="123" Width="100" Canvas.Top="75" />
                 <Button Name="btnSaveLog" Content="Save log" Width="75" Click="BtnSaveLog_Click" Canvas.Left="10" Canvas.Top="376"/>
                 <TextBox Name="FakeTxtBox" Height="23" Canvas.Left="23" TextWrapping="Wrap"  Canvas.Top="467" Width="34" Opacity="0"/>
             </Canvas>
 
             <TextBox DockPanel.Dock="Bottom" Height="150" Name="txtBox" TextWrapping="NoWrap" Text="" GotFocus="TxtBox_GotFocus"  />
 
-            <Canvas Name="cvtRight"  DockPanel.Dock="Right" Width="502">
-                <Slider Name="HSlider" HorizontalAlignment="Left" VerticalAlignment="Top" Width="186" Maximum="50" Minimum="-50" Canvas.Left="12" Canvas.Top="99"/>
-                <Slider Name="VSlider" HorizontalAlignment="Left" VerticalAlignment="Top" Width="22" Maximum="127" Minimum="-127" Orientation="Vertical" Height="161" Canvas.Left="95" Canvas.Top="28"/>
-                <Label Name="Vlbl" Content="Label" HorizontalAlignment="Left" VerticalAlignment="Top" Canvas.Left="87" Canvas.Top="9"/>
-                <Label Name="Hlbl" Content="Label" HorizontalAlignment="Left" VerticalAlignment="Top" Canvas.Left="194" Canvas.Top="94"/>
-                
-                <GroupBox Header="Night/Diesel" Height="179" Canvas.Left="262" Canvas.Top="10" Width="230">
+            <Canvas Name="panelSettings"  DockPanel.Dock="Right" Width="502">
+
+                <GroupBox x:Name="pnlAudio" Header="Audio" Height="179" Canvas.Left="262" Canvas.Top="10" Width="230">
                     <Canvas>
                         <Button x:Name="btnAudioStreamOn" Content="Audio On"  Width="75" Click="BtnAudioStreamOn_Click" Canvas.Left="10" Canvas.Top="10"/>
                         <Button x:Name="btnAudioStreamOff" Content="Audio Off"  Width="75" Click="BtnAudioStreamOff_Click" Canvas.Left="90" Canvas.Top="10"/>
                         <ComboBox x:Name="cbxSounds" HorizontalAlignment="Left" VerticalAlignment="Top" Width="155" Canvas.Left="10" Canvas.Top="50"/>
                         <Button x:Name="btnAudioRecord" Content="Send Sound"  Width="155" Click="BtnAudioRecord_Click" Canvas.Left="10" Canvas.Top="77"/>
-                        <Slider x:Name="slLight"  Canvas.Left="53" Canvas.Top="123" Width="112" ValueChanged="SlLight_ValueChanged" Maximum="255" SmallChange="0"/>
-                        <Label Content="Light :" Canvas.Left="10" Canvas.Top="117"/>
+                        <Button Content="Button" Canvas.Left="183" Canvas.Top="52" Width="25" Click="Button_Click"/>
                     </Canvas>
                 </GroupBox>
+                <GroupBox Header="Accessories" Height="179" Canvas.Left="262" Canvas.Top="200" Width="230">
+                    <Canvas>
+                        <CheckBox x:Name="chkBowl"  Content="Bowl" Canvas.Left="10" Canvas.Top="10" ToolTip="Disable jump if I wear Bowl" Checked="ChkBowl_Checked" Unchecked="ChkBowl_Unchecked" />
+                        <CheckBox x:Name="chkBox" IsEnabled="False" Content="Automatic Box" Canvas.Left="10" Canvas.Top="36" />
+                        <CheckBox x:Name="chkBoost" IsEnabled="False" Content="Boost Speed" Canvas.Left="10" Canvas.Top="63"  />
+                        <Slider x:Name="slLight"  Canvas.Left="53" Canvas.Top="96" Width="112" ValueChanged="SlLight_ValueChanged" Maximum="255" SmallChange="0"/>
+                        <Label Content="Light :" Canvas.Left="10" Canvas.Top="90"/>
+                    </Canvas>
+                </GroupBox>
+
+                <GroupBox x:Name="pnlSettings" Header="Settings" Height="369" Canvas.Left="10" Canvas.Top="10" Width="230">
+                    <Canvas>
+                        <Slider x:Name="slVolume" Maximum="100" Canvas.Left="115" Canvas.Top="18" Width="81" Thumb.DragCompleted="SlVolume_DragCompleted"/>
+                        <Label Content="Volume" Canvas.Left="35" Canvas.Top="18"/>
+                        <Label Content="Audio Theme" Canvas.Left="10" Canvas.Top="54"/>
+                        <ComboBox x:Name="cbxAudioTheme" Canvas.Left="115" Canvas.Top="54" Width="81" SelectionChanged="CbxAudioTheme_SelectionChanged"/>
+
+                        <Label Content="Wifi Band" Canvas.Left="30" Canvas.Top="85" RenderTransformOrigin="0.508,-0.179"/>
+                        <ComboBox x:Name="cbxWifiBand" Canvas.Left="115" Canvas.Top="85" Width="81" SelectionChanged="cbxWifiBand_SelectionChanged"/>
+                    </Canvas>
+                </GroupBox>
+
 
             </Canvas>
             <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">

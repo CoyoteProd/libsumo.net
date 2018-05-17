@@ -17,6 +17,8 @@ namespace SumoApplication.Video
     {
         public static Mat Decorate(Mat RawImage, SumoInformations sumoInformations)
         {
+            if (sumoInformations == null) return RawImage;
+
             Assembly _assembly = Assembly.GetExecutingAssembly();
 
             var dst = new Mat();
@@ -30,20 +32,23 @@ namespace SumoApplication.Video
 
             // Write Battery Level            
             Cv2.PutText(dst, sumoInformations.BatteryLevel.ToString() +"%", new OpenCvSharp.Point((dst.Width / 2) - 140, 60), HersheyFonts.HersheyComplexSmall, 2.0, color, 2, LineTypes.AntiAlias, false);
-            
+
             // Write wifi logo                                      
-            logo = BitmapConverter.ToMat(new Bitmap(_assembly.GetManifestResourceStream("SumoApplication.Images.wifi-signal-5.png")));
-            if (sumoInformations.Rssi < -50)
-                logo = BitmapConverter.ToMat(new Bitmap(_assembly.GetManifestResourceStream("SumoApplication.Images.wifi-signal-4.png")));
-            if (sumoInformations.Rssi < -60)
-                logo = BitmapConverter.ToMat(new Bitmap(_assembly.GetManifestResourceStream("SumoApplication.Images.wifi-signal-3.png")));
-            if (sumoInformations.Rssi < -70)
-                logo = BitmapConverter.ToMat(new Bitmap(_assembly.GetManifestResourceStream("SumoApplication.Images.wifi-signal-2.png")));
-            if (sumoInformations.Rssi < -80)
-                logo = BitmapConverter.ToMat(new Bitmap(_assembly.GetManifestResourceStream("SumoApplication.Images.wifi-signal-1.png")));
-            if (sumoInformations.Rssi < -90)
-                logo = BitmapConverter.ToMat(new Bitmap(_assembly.GetManifestResourceStream("SumoApplication.Images.wifi-signal-0.png")));
-            CopyTransparentImage(dst, logo, dst.Width - logo.Width-10, 10);
+            if (sumoInformations.Rssi < 0)
+            {
+                logo = BitmapConverter.ToMat(new Bitmap(_assembly.GetManifestResourceStream("SumoApplication.Images.wifi-signal-5.png")));
+                if (sumoInformations.Rssi < -50)
+                    logo = BitmapConverter.ToMat(new Bitmap(_assembly.GetManifestResourceStream("SumoApplication.Images.wifi-signal-4.png")));
+                if (sumoInformations.Rssi < -60)
+                    logo = BitmapConverter.ToMat(new Bitmap(_assembly.GetManifestResourceStream("SumoApplication.Images.wifi-signal-3.png")));
+                if (sumoInformations.Rssi < -70)
+                    logo = BitmapConverter.ToMat(new Bitmap(_assembly.GetManifestResourceStream("SumoApplication.Images.wifi-signal-2.png")));
+                if (sumoInformations.Rssi < -80)
+                    logo = BitmapConverter.ToMat(new Bitmap(_assembly.GetManifestResourceStream("SumoApplication.Images.wifi-signal-1.png")));
+                if (sumoInformations.Rssi < -90)
+                    logo = BitmapConverter.ToMat(new Bitmap(_assembly.GetManifestResourceStream("SumoApplication.Images.wifi-signal-0.png")));
+                CopyTransparentImage(dst, logo, dst.Width - logo.Width - 10, 10);
+            }
 
             // Link Quality           
             logo = BitmapConverter.ToMat(new Bitmap(_assembly.GetManifestResourceStream("SumoApplication.Images.icons8-signal-filled-4.png")));
@@ -83,7 +88,10 @@ namespace SumoApplication.Video
 
             if(sumoInformations.Alert != SumoEnumGenerated.AlertStateChanged_state.none)
                 Cv2.PutText(dst, sumoInformations.Alert.ToString(), new OpenCvSharp.Point(100, dst.Height / 2), HersheyFonts.HersheyComplexSmall, 6.0, Scalar.Red, 4, LineTypes.AntiAlias, false);
-
+            
+            if(sumoInformations.Speed!=0)
+                Cv2.PutText(dst, sumoInformations.Speed.ToString() + "cm/s", new OpenCvSharp.Point((dst.Width / 2) - 470, 60), HersheyFonts.HersheyComplexSmall, 2.0, color, 2, LineTypes.AntiAlias, false);
+            // TODO : Box icon (open/close)
 
             return dst;
             

@@ -17,7 +17,11 @@ namespace LibSumo.Net.Protocol
             Discovered,
             RSSI,
             LinkQuality,
-            VolumeChange
+            VolumeChange,
+            SpeedChange,
+            CapabilitiesChange,
+            WifiChanged,
+            AudioThemeChanged
         }
     }
 }

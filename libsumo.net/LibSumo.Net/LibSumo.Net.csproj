@@ -11,7 +11,7 @@
     <PackageProjectUrl>https://github.com/CoyoteProd/libsumo.net</PackageProjectUrl>
     <RepositoryUrl>ttps://github.com/CoyoteProd/libsumo.net</RepositoryUrl>
     <PackageTags>Parrot Sumo Jumping Jumpingsumo minidrone libsumo</PackageTags>
-    <Version>1.1.6</Version>
+    <Version>1.1.11</Version>
     <PackageReleaseNotes>First full working .Net Parrot Jumping Sumo library.
 Feature:
  - Full working integration of video in WPF application (Ready to be used with OpenCV)
@@ -19,9 +19,10 @@ Feature:
  - Postures, Animations, Jumps implemented
  - Events (Rssi, PostureState, Battery Level...) 
  - Set Volume and AudioTheme 
- - Headlight support for Night version</PackageReleaseNotes>
-    <AssemblyVersion>1.1.6.0</AssemblyVersion>
-    <FileVersion>1.1.6.0</FileVersion>
+ - Headlight support for Night version
+ - MultiDrone Support</PackageReleaseNotes>
+    <AssemblyVersion>1.1.11.0</AssemblyVersion>
+    <FileVersion>1.1.11.0</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -34,6 +35,7 @@ Feature:
 
   <ItemGroup>
     <Compile Remove="Protocol\SumoEnum - Copie.cs" />
+    <Compile Remove="SumoInformations.cs" />
   </ItemGroup>
 
   <ItemGroup>

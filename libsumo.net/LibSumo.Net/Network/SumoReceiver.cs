@@ -34,6 +34,7 @@ namespace LibSumo.Net.Network
         private object mutex_frames_Lock;
         private IPEndPoint SumoRemote;
         private SumoSender _sender;
+
         private SumoInformations _sumoInformations;
         
         // Video Frames
@@ -44,12 +45,14 @@ namespace LibSumo.Net.Network
         // Audio Frames
         private SumoAudioPlayer _audioPlayer;        
         private List<byte[]> AudioFrames;
-        
+
+        private UdpClient udpClient;
+        private Task ReceiveThread;
 
         #endregion
 
         #region Constructor
-        public SumoReceiver(string host, int port, SumoSender sender)
+        public SumoReceiver(string host, int port, SumoSender sender, ref SumoInformations sumoInformations)
         {
 
             this.Host = host;
@@ -65,16 +68,22 @@ namespace LibSumo.Net.Network
 
             // Audio Frames
             this.AudioFrames = new List<byte[]>();
-
-            _sumoInformations = new SumoInformations();
+            
+            _sumoInformations = sumoInformations;
         }
 
         #endregion
 
         public void RunThread()
         {
+            if (ReceiveThread!=null && ReceiveThread.Status == TaskStatus.Running)
+                IsConnected = false;
+
+            if (udpClient==null)
+                udpClient = new UdpClient(SumoRemote);
+
             this.IsConnected = true;
-            Task.Run( () => SumoReceive());
+            ReceiveThread = Task.Run( () => SumoReceive());
         }
         /// <summary>
         /// Stops the main loop and closes the connection to the Jumping Sumo
@@ -88,38 +97,38 @@ namespace LibSumo.Net.Network
         #region Private Methods
         private async void SumoReceive()
         {
-            using (var udpClient = new UdpClient(SumoRemote))
+
+           
+            LOGGER.GetInstance.Info("[SumoReceiver] Thread Started");
+            while (this.IsConnected)
             {
-                LOGGER.GetInstance.Info("[SumoReceiver] Thread Started");
-                while (this.IsConnected)
-                {
-                    byte[] packet;
-                    try
-                    {                        
-                        var receivedResults = await udpClient.ReceiveAsync();
-                        packet = receivedResults.Buffer;
-                        while (packet.Length > 0)
-                        {
-                            // A packet can have one or more frames
-                            var Result = _split_frames(packet);
-                            byte[] frame = Result.Item1;
-                            packet = Result.Item2;
-                            if (frame == null)
-                            {
-                                break;
-                            }
-                            // Process the next frame
-                            this._process_frame(frame);
-                        }
-                    }
-                    catch (Exception e)
+                byte[] packet;
+                try
+                {                        
+                    var receivedResults = await udpClient.ReceiveAsync();
+                    packet = receivedResults.Buffer;
+                    while (packet.Length > 0)
                     {
-                        LOGGER.GetInstance.Error("[SumoReceiver] socket.recv() timed out with message : " + e.Message);
-                        break;
+                        // A packet can have one or more frames
+                        var Result = _split_frames(packet);
+                        byte[] frame = Result.Item1;
+                        packet = Result.Item2;
+                        if (frame == null)
+                        {
+                            break;
+                        }
+                        // Process the next frame
+                        this._process_frame(frame);
                     }
                 }
-                LOGGER.GetInstance.Info("[SumoReceiver] Thread Stopped");
+                catch (Exception e)
+                {
+                    LOGGER.GetInstance.Error("[SumoReceiver] socket.recv() timed out with message : " + e.Message);
+                    break;
+                }
             }
+            LOGGER.GetInstance.Info("[SumoReceiver] Thread Stopped");
+            
         }           
         
         private void _process_frame(byte[] frame)
@@ -169,16 +178,16 @@ namespace LibSumo.Net.Network
                     LOGGER.GetInstance.Info(String.Format("Time updated to: {0}", Encoding.ASCII.GetString(time)));
                 } else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.common_CommonState_WifiSignalChanged))
                 {
-                    Int16 rssi = (Int16)StructConverter.Unpack("<h", payload.SubArray("4:"))[0];                    
+                    Int16 rssi = (Int16)StructConverter.Unpack("<h", payload.SubArray("4:"))[0];
                     _sumoInformations.Rssi = rssi;
                     var evt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.RSSI, _sumoInformations);
                     OnSumoEvents(evt);
-                }else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.common_CommonState_BatteryStateChanged))
+                } else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.common_CommonState_BatteryStateChanged))
                 {
                     var battery = payload.SubArray("4:5")[0];
                     BatteryLevel = battery;
                     _sumoInformations.BatteryLevel = BatteryLevel;
-                    var BatEvt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.BatteryLevelEvent, _sumoInformations);                    
+                    var BatEvt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.BatteryLevelEvent, _sumoInformations);
                     OnSumoEvents(BatEvt);
                 }
                 else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.common_CommonState_AllStatesChanged))
@@ -192,6 +201,10 @@ namespace LibSumo.Net.Network
                     // Device model
                     byte Model = payload.SubArray("4:")[0];
                     LOGGER.GetInstance.Info(String.Format("Device Model: {1} {0}", Model, (SumoEnumGenerated.ProductModel_model)Model).ToString());
+                    // Add Capabilities 
+                    _sumoInformations.BuildCapabilities((SumoEnumGenerated.ProductModel_model)Model);
+                    var CapEvt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.CapabilitiesChange, _sumoInformations);
+                    OnSumoEvents(CapEvt);
                 }
                 else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.common_HeadlightsState_intensityChanged))
                 {
@@ -215,7 +228,7 @@ namespace LibSumo.Net.Network
                         if (_audioPlayer != null)
                         {
                             _audioPlayer.Stop();
-                        }                        
+                        }
                     }
 
                     if ((AudioStateData & (1 << 1)) != 0)
@@ -230,16 +243,19 @@ namespace LibSumo.Net.Network
                 else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.jpsumo_PilotingState_SpeedChanged))
                 {
                     var Result2 = StructConverter.Unpack("<bh", payload.SubArray("4:"));
-                    byte speed = (byte)Result2[0];
+                    sbyte speed = (sbyte)Result2[0];
                     Int16 real_speed = (Int16)Result2[1];
-                    LOGGER.GetInstance.Info(String.Format("Speed updated to {0} ({1} cm/s)", speed, real_speed));
+                    LOGGER.GetInstance.Debug(String.Format("Speed updated to {0} ({1} cm/s)", speed, real_speed));
+                    _sumoInformations.Speed = speed;
+                    var evt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.SpeedChange, _sumoInformations);
+                    OnSumoEvents(evt);
                 }
                 else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.jpsumo_PilotingState_PostureChanged))
                 {
                     var state = (Int32)StructConverter.Unpack("<i", payload.SubArray("4:"))[0];
                     LOGGER.GetInstance.Debug(String.Format("State of posture changed: {1} ({0})", state, (SumoEnumGenerated.PostureChanged_state)state).ToString());
                     _sumoInformations.Posture = (SumoEnumGenerated.PostureChanged_state)state;
-                    var evt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.PostureEvent, _sumoInformations);                                        
+                    var evt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.PostureEvent, _sumoInformations);
                     OnSumoEvents(evt);
                 }
                 else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.jpsumo_AnimationsState_JumpLoadChanged))
@@ -261,7 +277,7 @@ namespace LibSumo.Net.Network
                 {
                     var linkQuality = (byte)StructConverter.Unpack("<B", payload.SubArray("4:"))[0];
                     _sumoInformations.LinkQuality = linkQuality;
-                    var evt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.LinkQuality, _sumoInformations);                                        
+                    var evt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.LinkQuality, _sumoInformations);
                     OnSumoEvents(evt);
                 }
                 else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.jpsumo_MediaStreamingState_VideoEnableChanged))
@@ -272,17 +288,36 @@ namespace LibSumo.Net.Network
                 else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.jpsumo_AudioSettingsState_MasterVolumeChanged))
                 {
                     var VolumeState = (byte)payload.SubArray("4:")[0];
-                    //LOGGER.GetInstance.Info(String.Format("Volume state is: {0}", VolumeState));
+                    LOGGER.GetInstance.Debug(String.Format("Volume state is: {0}", VolumeState));
                     _sumoInformations.Volume = VolumeState;
-                    var evt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.VolumeChange, _sumoInformations);                                        
+                    var evt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.VolumeChange, _sumoInformations);
                     OnSumoEvents(evt);
                 }
                 else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.jpsumo_PilotingState_AlertStateChanged))
                 {
                     var state = (Int32)StructConverter.Unpack("<i", payload.SubArray("4:"))[0];
                     _sumoInformations.Alert = (SumoEnumGenerated.AlertStateChanged_state)state;
-                    var evt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.AlertEvent, _sumoInformations);                                                                
+                    var evt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.AlertEvent, _sumoInformations);
                     OnSumoEvents(evt);
+                    LOGGER.GetInstance.Debug(String.Format("AlertStateChanged: {0}", ((SumoEnumGenerated.AlertStateChanged_state)state).ToString()));
+                }
+                else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.jpsumo_NetworkSettingsState_WifiSelectionChanged))
+                {                    
+                    var Wifi = StructConverter.Unpack("<iiB", payload.SubArray("4:"));
+                    int WifiType = (int)Wifi[0];
+                    int WifiBand = (int)Wifi[1];
+                    byte WifiChannel = (byte)Wifi[2];
+                    LOGGER.GetInstance.Info(String.Format("Wifi Type:{0} Band:{1} Channel:{2}", ((SumoEnumGenerated.WifiSelectionChanged_type)WifiType).ToString(), ((SumoEnumGenerated.WifiSelectionChanged_band)WifiBand).ToString(), WifiChannel));
+                    _sumoInformations.WifiType = (SumoEnumGenerated.WifiSelectionChanged_type)WifiType;
+                    _sumoInformations.WifiBand = (SumoEnumGenerated.WifiSelectionChanged_band)WifiBand;
+                    _sumoInformations.WifiChannel = WifiChannel;
+                    var evt = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.WifiChanged, _sumoInformations);
+                    OnSumoEvents(evt);
+                }
+                else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.jpsumo_AudioSettingsState_ThemeChanged))
+                {
+                    var AudioTheme = StructConverter.Unpack("<B", payload.SubArray("4:"))[0];
+                    LOGGER.GetInstance.Info(String.Format("Audio Theme Changed: {0} ", ((SumoEnumGenerated.ThemeChanged_theme)AudioTheme).ToString()));
                 }
                 else
                 {
@@ -361,26 +396,29 @@ namespace LibSumo.Net.Network
                 // From : https://github.com/Parrot-Developers/libARController/blob/master/JNI/java/com/parrot/arsdk/arcontroller/ARAudioFrame.java
                 // https://github.com/Parrot-Developers/libARController/blob/master/Sources/ARCONTROLLER_AudioHeader.h
                 // So Skip 16 first byte (5 frame header + 11 Audio Header)
-                byte[] fragment = payload.SubArray("16:");
+                byte[] fragment = payload.SubArray("7:");
                 
 
                 // Write it in the shared Stream               
                 _audioPlayer.OnDataReceived(fragment);
 
-                // Debug
-                //byte[] AudioHeader = payload.SubArray(":16");
-                //var r = StructConverter.Unpack("<QHHI", AudioHeader);
+                // Debug                
+                /*
+                byte[] AudioHeader = payload; //.SubArray(":16");
+                var r = StructConverter.Unpack("<QHHI", AudioHeader);
 
-                //using (var stream = new FileStream("AudioHeader.dat", FileMode.Append))
-                //{
-                    //stream.Write(fragment, 0, fragment.Length);
-                    //stream.Write(new byte[] { 0xff, 0xff, 0xff, 0xff }, 0, 4);
-                //}                
+                using (var stream = new FileStream("AudioHeader.dat", FileMode.Append))
+                {
+                    stream.Write(fragment, 0, fragment.Length);
+                    stream.Write(new byte[] { 0x0d, 0x0a }, 0, 2);
+                } 
+                */
+                
             }
             else
             {
                 // Stream data from another low-latency buffer (maybe audio?)
-                LOGGER.GetInstance.Debug(String.Format("ARStream | buffer: {0}, size: {1}", buffer_id, frame_size - 7));
+                LOGGER.GetInstance.Debug(String.Format("Unknow ARStream | buffer: {0}, size: {1}", buffer_id, frame_size - 7));
                 return;
             }        
         }

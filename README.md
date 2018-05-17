@@ -8,6 +8,9 @@ Feature
  - Postures, Animations, Jumps implemented
  - Events (Rssi, PostureState, Battery Level...) 
  - Set Volume and AudioTheme 
+ - Add MultipleDrones Support
+ - Audio Improvment
+ - Add Race Support
  - Nuget package available 
  
  This work was Inspired by https://github.com/iloreen/libsumo, https://github.com/robotika/lamia and https://github.com/frankibem/sumo-control Excellent Work!
@@ -19,21 +22,16 @@ Nuget Packages used :
  
 SumoApplication Feature:
  - Arrows key : Piloting Sumo
- - Animation [1] [2] [3] :  (Tap, Ondulation, SlowShake)
- - Postures  [F1] : Normal mode
-             [F2] : Kicker
-             [F3] : Auto-Balance
- - [SPACE] [W] [S] : Quick Turn ±180°
- - [A], [D] : Quick Turn ±90°
- - [ESC] : Disconnect
+ - Animation {1} {2} {3} :  (Tap, Ondulation, SlowShake)
+ - Postures  {F1} : Normal mode
+             {F2} : Kicker
+             {F3} : Auto-Balance
+ - {SPACE} {W} {S} : Quick Turn ±180°
+ - {A}, {D} : Quick Turn ±90°
+ - {ESC} : Disconnect
 
 [![Sumoapplication][1]][1]
-
-
   [1]: https://i.stack.imgur.com/gNtyJ.png
 
+  
 Have fun !
-
-
-If some of you want to contribute to help me to buy new Jumping... :
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://paypal.me/pools/c/82madPSBJJ)
