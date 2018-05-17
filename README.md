@@ -30,9 +30,6 @@ SumoApplication Feature:
  - {A}, {D} : Quick Turn ±90°
  - {ESC} : Disconnect
 
-<<<<<<< HEAD
-![Alt text] https://github.com/CoyoteProd/libsumo.net/blob/master/screenshot.jpg
-
-=======
+![alt text](screenshot.jpg "Sumo Application")
   
 Have fun !
