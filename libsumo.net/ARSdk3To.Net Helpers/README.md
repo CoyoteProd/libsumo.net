@@ -1,3 +1,4 @@
 # ARSdk3To.Net Helpers
 
-This Class is used to generate Enum, Command and Tuple from the original Parrot SDK to C# Classes
+This standalone project is used to generate Enum, Command and Tuple from the original Parrot SDK to C# Classes
+There is no direct link between library and this project
