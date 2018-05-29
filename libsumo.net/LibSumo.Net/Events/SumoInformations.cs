@@ -41,7 +41,7 @@ namespace LibSumo.Net.Events
         public SumoInformations()
         {
             Capabilities = new List<Capability>();
-            AddCapabilities(Capability.Jump); // Default all drone can Jump
+            Capabilities.Add(Capability.Jump); // Default all drone can Jump
         }
 
         /// <summary>
