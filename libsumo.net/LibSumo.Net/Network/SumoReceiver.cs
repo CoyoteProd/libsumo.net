@@ -316,7 +316,7 @@ namespace LibSumo.Net.Network
                 }
                 else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.jpsumo_AudioSettingsState_ThemeChanged))
                 {
-                    var AudioTheme = StructConverter.Unpack("<B", payload.SubArray("4:"))[0];
+                    var AudioTheme = (byte)StructConverter.Unpack("<B", payload.SubArray("4:"))[0];
                     LOGGER.GetInstance.Info(String.Format("Audio Theme Changed: {0} ", ((SumoEnumGenerated.ThemeChanged_theme)AudioTheme).ToString()));
                 }
                 else

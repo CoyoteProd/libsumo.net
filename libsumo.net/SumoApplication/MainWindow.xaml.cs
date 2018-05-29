@@ -39,9 +39,6 @@ namespace SumoApplication
     
     public partial class MainWindow : System.Windows.Window, IDisposable
     {
-
-
-
         private SumoController controller;
         private SumoKeyboardPiloting piloting;
         private SumoInformations sumoInformations;        

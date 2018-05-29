@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -54,8 +55,12 @@ namespace LibSumo.Net.Logger
             }
         }
 
-        public void Debug(string v)
+        public void Debug(string v, [CallerMemberName] string callingMethod = "",
+                                    [CallerFilePath] string callingFilePath = "",
+                                    [CallerLineNumber] int callingFileLineNumber = 0)        
         {
+            if (MessageLevel <= log4net.Core.Level.Debug)
+                v = String.Format("{0} in {1} at line {2} in source {3}", v, callingMethod, callingFileLineNumber, callingFilePath);
 
             if (LogEnabled) L4NET.Debug(v);
             if (MessageEnabled)
@@ -85,14 +90,14 @@ namespace LibSumo.Net.Logger
                     OnMessage(new MessageEventArgs(v, "Error"));
             }
         }
-        #region Handler
+#region Handler
         public delegate void MessageEventHandler(object sender, MessageEventArgs e);
         public event MessageEventHandler MessageAvailable;
         protected virtual void OnMessage(MessageEventArgs e)
         {
             MessageAvailable?.Invoke(this, e);
         }
-        #endregion
+#endregion
 
     }
     public class MessageEventArgs : System.EventArgs
