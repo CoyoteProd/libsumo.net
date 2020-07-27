@@ -1,0 +1,38 @@
+﻿<Window x:Class="SumoApplication.Simulate"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SumoApplication"
+        mc:Ignorable="d"
+        Title="Simulate" Height="450" Width="478.933">
+    <Grid>
+        <StackPanel Margin="5,5,5,5" >
+            <StackPanel Margin="5,5,5,5" Orientation="Horizontal"   >
+                <Label Content="Battery" Margin="5,5,5,5" HorizontalAlignment="Center" VerticalAlignment="Center" Width="60"/>
+                <Slider x:Name="sldBattery" Maximum="100" Value="50" Margin="5,5,5,5" Width="300" HorizontalAlignment="Center" VerticalAlignment="Center" ValueChanged="sldBattery_ValueChanged"/>
+            </StackPanel>
+
+            <StackPanel Margin="5,5,5,5" Orientation="Horizontal"  >
+                <Label Content="Rssi" Margin="5,5,5,5" HorizontalAlignment="Center" VerticalAlignment="Center" Width="60"/>
+                <Slider x:Name="sldRssi" Minimum="-100" Maximum="0" Value="-50" Margin="5,5,5,5" Width="300" HorizontalAlignment="Center" VerticalAlignment="Center" ValueChanged="sldRssi_ValueChanged"/>
+            </StackPanel>
+
+            <StackPanel Margin="5,5,5,5"  Orientation="Horizontal"  >
+                <Label Content="Quality" Margin="5,5,5,5" HorizontalAlignment="Center" VerticalAlignment="Center" Width="60"/>
+                <Slider x:Name="sldQuality" Maximum="5" Value="1" Margin="5,5,5,5" Width="300" HorizontalAlignment="Center" VerticalAlignment="Center" ValueChanged="sldQuality_ValueChanged"/>
+            </StackPanel>
+            
+            <StackPanel Margin="5,5,5,5"  Orientation="Horizontal"  >
+                <Label Content="Posture" Margin="5,5,5,5" HorizontalAlignment="Center" VerticalAlignment="Center" Width="60"/>
+                <Slider x:Name="sldPosture" Maximum="5" Value="5" Margin="5,5,5,5" Width="300" HorizontalAlignment="Center" VerticalAlignment="Center" ValueChanged="sldPosture_ValueChanged"/>
+            </StackPanel>
+            
+            <StackPanel Margin="5,5,5,5"  Orientation="Horizontal"  >
+                <Label Content="Speed" Margin="5,5,5,5" HorizontalAlignment="Center" VerticalAlignment="Center" Width="60"/>
+                <Slider x:Name="sldSpeed" Maximum="100" Value="50" Margin="5,5,5,5" Width="300" HorizontalAlignment="Center" VerticalAlignment="Center" ValueChanged="sldSpeed_ValueChanged"/>
+            </StackPanel>
+        </StackPanel>
+
+    </Grid>
+</Window>

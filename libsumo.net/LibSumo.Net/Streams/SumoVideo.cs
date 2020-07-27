@@ -16,9 +16,35 @@ namespace LibSumo.Net.Streams
         private SumoReceiver receiver;
         private bool IsConnected { get; set; }
         private string Window_name { get; set; }
+        private VideoWriter writer; 
         #endregion
 
         public bool ImageInSeparateOpenCVWindow { get; set; }
+        private bool _videoCaptureEnabled;
+        private Timer VideoTimeout;
+        public bool VideoCaptureEnabled
+        {
+            get
+            {
+                return _videoCaptureEnabled;
+            }
+            set
+            {
+                _videoCaptureEnabled = value;
+                if (value == true)
+                {
+                    Size dsize = new Size(640, 480);
+                    writer = new VideoWriter("video.avi", -1, 10, dsize);
+                    VideoTimeout = new Timer(new TimerCallback(VideoTimeoutCallback),null,10000,Timeout.Infinite);                   
+                }else
+                {
+                    VideoTimeout.Change(Timeout.Infinite, Timeout.Infinite);
+                    VideoTimeout.Dispose();
+                    writer.Dispose();
+                }
+                
+            }
+        }
 
         #region Constructor
         public SumoVideo(SumoReceiver _receiver)
@@ -63,6 +89,8 @@ namespace LibSumo.Net.Streams
                         Cv2.ImShow(this.Window_name, img);
                     else
                         OnImage(new ImageEventArgs(img));
+
+                    if (VideoCaptureEnabled) writer.Write(img);
                     
                 }
                 if (ImageInSeparateOpenCVWindow)  Cv2.WaitKey(25);
@@ -70,10 +98,14 @@ namespace LibSumo.Net.Streams
             }
             LOGGER.GetInstance.Info("[SumoDisplay] Thread Stopped");         
         }
-
         
-        #region Events Handler
-        public delegate void ImageEventHandler(object sender, ImageEventArgs e);
+        private void VideoTimeoutCallback(object state)
+        {
+            VideoCaptureEnabled = false;
+        }
+
+    #region Events Handler
+    public delegate void ImageEventHandler(object sender, ImageEventArgs e);
         public event ImageEventHandler ImageAvailable;
         protected virtual void OnImage(ImageEventArgs e)
         {

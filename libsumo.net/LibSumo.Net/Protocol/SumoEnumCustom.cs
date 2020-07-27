@@ -21,7 +21,11 @@ namespace LibSumo.Net.Protocol
             SpeedChange,
             CapabilitiesChange,
             WifiChanged,
-            AudioThemeChanged
+            AudioThemeChanged,
+            CSTMSupervisorStarted,
+            BoxOpened,
+            BoxError,
+            BoxClosed
         }
     }
 }

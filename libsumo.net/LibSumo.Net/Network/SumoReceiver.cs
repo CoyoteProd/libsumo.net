@@ -79,8 +79,16 @@ namespace LibSumo.Net.Network
             if (ReceiveThread!=null && ReceiveThread.Status == TaskStatus.Running)
                 IsConnected = false;
 
-            if (udpClient==null)
-                udpClient = new UdpClient(SumoRemote);
+            if (udpClient == null)
+            {
+                try
+                {
+                    udpClient = new UdpClient(SumoRemote);
+                }
+                catch
+                {
+                }
+            }
 
             this.IsConnected = true;
             ReceiveThread = Task.Run( () => SumoReceive());
@@ -195,6 +203,7 @@ namespace LibSumo.Net.Network
                     // All states have been sent
                     var State = payload.SubArray("4:");
                     LOGGER.GetInstance.Debug(String.Format("All states have been sent: {0}", BitConverter.ToString(State)));
+                    _sumoInformations.BuildDefaultCapabilities();
                 }
                 else if (Tuple.Create(cmd_project, cmd_class, cmd_id).Equals(SumoConstantsGenerated.common_CommonState_ProductModel))
                 {

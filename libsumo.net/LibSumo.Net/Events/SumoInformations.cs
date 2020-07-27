@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
 using LibSumo.Net.Logger;
 using LibSumo.Net.Protocol;
 
@@ -21,13 +24,14 @@ namespace LibSumo.Net.Events
         public byte Volume { get; internal set; }
         public string DeviceName { get; internal set; }
         private List<Capability> Capabilities { get; set; }
-        // If battery is leff than LowBatteryLevelAlert -> User can Take Action
+        // If battery is less than LowBatteryLevelAlert -> User can Take Action
         public const int LowBatteryLevelAlert = 10;
+        public string deviceIp { get; set; }
         public bool IsBatteryUnderLevelAlert
         {
             get
             {
-                if (BatteryLevel == 0) return false;
+                //if (BatteryLevel == 0) return false;
                 return BatteryLevel <= LowBatteryLevelAlert;
                 
             }
@@ -37,6 +41,7 @@ namespace LibSumo.Net.Events
         public SumoEnumGenerated.WifiSelectionChanged_band WifiBand { get; internal set; }
         public byte WifiChannel { get; internal set; }
         public int AudioTheme { get; set; }
+        public string LastErrorStr { get; set; }
 
         public SumoInformations()
         {
@@ -76,6 +81,12 @@ namespace LibSumo.Net.Events
             return Capabilities.Contains(cap);
         }
 
+        public List<Capability> BuildDefaultCapabilities()
+        {            
+            AddCapabilities(SumoInformations.Capability.Jump);
+            PingBox();
+            return Capabilities;
+        }
         /// <summary>
         /// Hard Coded capabilities.
         /// Can be modified to your needs
@@ -96,7 +107,7 @@ namespace LibSumo.Net.Events
                     break;
                 case (SumoEnumGenerated.ProductModel_model.SW_WHITE):
                 case (SumoEnumGenerated.ProductModel_model.SW_BLACK):
-                    AddCapabilities(Capability.Box); // TODO : Check if box is here...
+                    AddCapabilities(Capability.Box); 
                     
                     break;
                 case (SumoEnumGenerated.ProductModel_model.JS_MAX):
@@ -110,19 +121,55 @@ namespace LibSumo.Net.Events
             return Capabilities;
         }
 
-        public void AddCapabilities(Capability cap)
+        private void AddCapabilities(Capability cap)
         {
-            LOGGER.GetInstance.Info(String.Format("Add Capabilities: {0}", cap));
-            Capabilities.Add(cap);
+            
+            if (!Capabilities.Contains(cap))
+            {
+                LOGGER.GetInstance.Info(String.Format("Add Capabilities: {0}", cap));
+                Capabilities.Add(cap);
+            }else
+                LOGGER.GetInstance.Info(String.Format("Add Capabilities: {0} already have", cap));
 
         }
         public void RemoveCapabilities(Capability cap)
         {
-            LOGGER.GetInstance.Info(String.Format("Remove Capabilities: {0}", cap));
-            Capabilities.Remove(cap);
+            
+            if (Capabilities.Contains(cap))
+            {
+                LOGGER.GetInstance.Info(String.Format("Remove Capabilities: {0}", cap));
+                Capabilities.Remove(cap);
+            }else
+                LOGGER.GetInstance.Info(String.Format("Remove Capabilities: {0} already removed", cap));
 
         }
+        private void PingBox()
+        {
+            using (Socket sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
+            {
+                byte[] receive_buffer = new byte[100];
+                IPAddress serverAddr = IPAddress.Parse(deviceIp);
+                IPEndPoint endPoint = new IPEndPoint(serverAddr, 4567);
+                byte[] send_buffer = Encoding.ASCII.GetBytes("ping\0");
+                sock.SendTo(send_buffer, endPoint);
+                try
+                {
+                    int l = sock.Receive(receive_buffer);
+                }
+                catch (SocketException e)
+                {
+                    int x = e.ErrorCode;
+                }
 
+                var str = System.Text.Encoding.Default.GetString(receive_buffer).Trim('\0');
+                if (str.Equals("pong"))
+                {
+                    AddCapabilities(Capability.Box);
+                }
+
+            }
+
+        }
 
     }
 }

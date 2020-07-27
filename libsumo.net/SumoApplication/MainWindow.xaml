@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:SumoApplication"
         mc:Ignorable="d"
         MinHeight="630" MinWidth="1024"
-        Title="MainWindow"  Width="1024" Height="600">
+        Title="MainWindow"  Width="887" Height="539">
     <Grid>
         <DockPanel  LastChildFill="True">
 
@@ -19,11 +19,16 @@
                 <Button x:Name="btnSTOP" Content="STOP"  Width="75" Click="BtnSTOP_Click" Canvas.Left="514" Canvas.Top="19" ToolTip="Emergency Stop. Stop all action of JumpingSumo and Stay Here"/>
             </Canvas>
 
-            <Canvas Width="100">
-                <Button Name="btnConnect" Content="Connect"  Width="75" Click="BtnConnect_Click" Canvas.Left="10" Canvas.Top="11"/>
-                <Button Name="btnDisconnect" Content="Disconnect"  Width="75" Click="BtnDisconnect_Click" Canvas.Left="10" Canvas.Top="41"/>
-                <StackPanel x:Name="stckPanel" Height="123" Width="100" Canvas.Top="75" />
-                <Button Name="btnSaveLog" Content="Save log" Width="75" Click="BtnSaveLog_Click" Canvas.Left="10" Canvas.Top="376"/>
+            <Canvas Width="120">
+                <Button Name="btnConnect" Content="Connect local"  Width="105" Click="BtnConnect_Click" Canvas.Left="10" Canvas.Top="11"/>
+                <Button Name="btnDisconnect" Content="Disconnect"  Width="105" Click="BtnDisconnect_Click" Canvas.Left="10" Canvas.Top="41"/>
+                <Button Name="btnEnableMultiDrones" Content="EnableMultiDrones"  Width="105" Click="btnEnableMultiDrones_Click" Canvas.Left="10" Canvas.Top="71"/>
+                <StackPanel x:Name="stckPanel1" Height="250" Width="120"  Canvas.Top="100" />
+                <StackPanel x:Name="stckPanel2"  Width="120" Canvas.Top="375">
+                    <Button Name="btnSaveLog" Content="Save log" Width="95" Click="BtnSaveLog_Click"  Margin="5,5,5,5"/>
+                    <Button Name="btnSimulate" Content="Simulate" Width="95" Click="btnSimulate_Click" Margin="5,5,5,5"/>
+                    <Button Name="btnRecordVideo" Content="rec video 10s" Width="95" Click="btnRecordVideo_Click" Margin="5,5,5,5"/>
+                </StackPanel>
                 <TextBox Name="FakeTxtBox" Height="23" Canvas.Left="23" TextWrapping="Wrap"  Canvas.Top="467" Width="34" Opacity="0"/>
             </Canvas>
 
@@ -31,7 +36,7 @@
 
             <Canvas Name="panelSettings"  DockPanel.Dock="Right" Width="502">
 
-                <GroupBox x:Name="pnlAudio" Header="Audio" Height="179" Canvas.Left="262" Canvas.Top="10" Width="230">
+                <GroupBox x:Name="pnlAudio" Header="Audio Streaming" Height="179" Canvas.Left="262" Canvas.Top="10" Width="230">
                     <Canvas>
                         <Button x:Name="btnAudioStreamOn" Content="Audio On"  Width="75" Click="BtnAudioStreamOn_Click" Canvas.Left="10" Canvas.Top="10"/>
                         <Button x:Name="btnAudioStreamOff" Content="Audio Off"  Width="75" Click="BtnAudioStreamOff_Click" Canvas.Left="90" Canvas.Top="10"/>
@@ -43,10 +48,10 @@
                 <GroupBox Header="Accessories" Height="179" Canvas.Left="262" Canvas.Top="200" Width="230">
                     <Canvas>
                         <CheckBox x:Name="chkBowl"  Content="Bowl" Canvas.Left="10" Canvas.Top="10" ToolTip="Disable jump if I wear Bowl" Checked="ChkBowl_Checked" Unchecked="ChkBowl_Unchecked" />
-                        <CheckBox x:Name="chkBox" IsEnabled="False" Content="Automatic Box" Canvas.Left="10" Canvas.Top="36" />
-                        <CheckBox x:Name="chkBoost" IsEnabled="False" Content="Boost Speed" Canvas.Left="10" Canvas.Top="63"  />
-                        <Slider x:Name="slLight"  Canvas.Left="53" Canvas.Top="96" Width="112" ValueChanged="SlLight_ValueChanged" Maximum="255" SmallChange="0"/>
-                        <Label Content="Light :" Canvas.Left="10" Canvas.Top="90"/>
+                        <CheckBox x:Name="chkBox" IsEnabled="False" Content="Automatic Box (y:open x:close)" Canvas.Left="10" Canvas.Top="36" />
+                        <CheckBox x:Name="chkBoost" IsEnabled="False" Content="Boost Speed (4)" Canvas.Left="10" Canvas.Top="63"  />
+                        <Slider x:Name="slLight"  Canvas.Left="10" Canvas.Top="123" Width="182" ValueChanged="SlLight_ValueChanged" Maximum="255" SmallChange="0"/>
+                        <Label Content="Light (e:on q:off) :" Canvas.Left="10" Canvas.Top="92" Height="26" Width="103"/>
                     </Canvas>
                 </GroupBox>
 
@@ -70,7 +75,7 @@
                 <Label x:Name="lblPostureState" Content="PostureStateName : N/A" Canvas.Left="25" Canvas.Top="300" />
                 <Label x:Name="lblQuality" Content="Quality link: N/A" Canvas.Left="25" Canvas.Top="269" />
             </StackPanel>
-            <Image  Name="image"/>
+            <Image  Name="imgMain" MouseLeftButtonDown="ImgMain_MouseLeftButtonDown"/>
         </DockPanel>
     </Grid>
 </Window>

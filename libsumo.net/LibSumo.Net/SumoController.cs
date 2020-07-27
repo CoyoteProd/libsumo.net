@@ -39,6 +39,7 @@ namespace LibSumo.Net
 
         private bool Ping_Should_run = true;
         private bool AlwaysPing;
+        List<string> DevicesList;
         private static SumoInformations sumoInformations;
         #endregion
 
@@ -47,7 +48,7 @@ namespace LibSumo.Net
         /// If you want process video in OpenCV separate window Set EnableOpenCV to true
         /// In this case controller.ImageAvailable is not fired
         /// </summary>
-        public bool EnableOpenCV { private get; set; }
+        public bool EnableOpenCVSeparatedWindow { private get; set; }
         public bool IsConnected { get; set; }        
         private bool CurrentDroneRX { get; set; }
         private bool CurrentDroneTX { get; set; }
@@ -70,24 +71,14 @@ namespace LibSumo.Net
         /// <summary>
         /// If you want to have your proper piloting system
         /// </summary>
-        /// <param name="DeviceIP"></param>
-        public SumoController(List<string> DevicesList = null, bool _AlwaysPing = false)
+        /// <param name="DevicesList"></param>
+        public SumoController(List<string> _DevicesList = null, bool _AlwaysPing = false)
         {
-            // Process List of devices
             AlwaysPing = _AlwaysPing;
-            if (DevicesList != null)
-            {   // Start Discover thread for each device
-                foreach (string device in DevicesList)
-                    StartPingThread(device);
-            }
-            else
-            {
-                // No device list so try to detect default device
-                StartPingThread(deviceIp);
-            }
-
-            LOGGER.GetInstance.Info(String.Format("Starting Controller"));
-            EnableOpenCV = false;
+            DevicesList = _DevicesList;
+            StartPingSupervisorThread();
+            LOGGER.GetInstance.Info(String.Format("Controller started"));
+            EnableOpenCVSeparatedWindow = false;
             sumoInformations = new SumoInformations();
         }
 
@@ -130,6 +121,8 @@ namespace LibSumo.Net
                 this.c2d_port = int.Parse(config_data["c2d_port"].ToString());
                 this.fragment_size = int.Parse(config_data["arstream_fragment_size"].ToString());
                 this.fragments_per_frame = int.Parse(config_data["arstream_fragment_maximum_number"].ToString());
+
+                sumoInformations.deviceIp = deviceIp;
                 return true;
             }
             catch (Exception e)
@@ -141,15 +134,46 @@ namespace LibSumo.Net
 
         }
 
+        private void StartPingSupervisorThread()
+        {
+            Task.Run(() =>
+            {
+                List<Task> taskList = new List<Task>();
+                while (Ping_Should_run)
+                {
+                    // Process List of devices                    
+                    if (DevicesList != null)
+                    {   // Start Discover thread for each device
+                        foreach (string device in DevicesList)
+                        {
+                            taskList.Add(StartPingThread(device));
+                        }
+                    }
+                    else
+                    {
+                        // No device list so try to detect default device
+                        taskList.Add(StartPingThread(deviceIp));
+                    }
+                    SumoEventArgs evtArgs = new SumoEventArgs(SumoEnumCustom.TypeOfEvents.CSTMSupervisorStarted, null)
+                    {
+                        SumoInformations = sumoInformations
+                    };
+                    OnSumoEvents(evtArgs);
+                    // Wait that all thread finished
+                    foreach (Task tsk in taskList) tsk.Wait();
+
+                    Thread.Sleep(10 * 1000); // each 10sec
+                }
+            });
+        }
         /// <summary>
         /// Simple network discovery
         /// TODO : To Improve
         /// </summary>
-        private void StartPingThread(string _deviceIp)
+        private Task StartPingThread(string _deviceIp)
         {
-            Task.Run(() =>
-            {
-                
+            return Task.Run(() =>
+            {                
                 while (Ping_Should_run)
                 {
                     Ping pinger = new Ping();
@@ -165,12 +189,13 @@ namespace LibSumo.Net
                             };
                             OnSumoEvents(evtArgs);
                             if(!AlwaysPing) return;
-                        }
+                        }                        
                     }
                     catch (PingException)
                     {
                         // Discard PingExceptions
                     }
+
                     Thread.Sleep(1000);
                 }
             });
@@ -195,7 +220,7 @@ namespace LibSumo.Net
             {
                 if (ip.AddressFamily == AddressFamily.InterNetwork)
                 {
-                    this.deviceIp = name;
+                    this.deviceIp = name;                    
                     return Connect();
                 }
             }
@@ -203,7 +228,7 @@ namespace LibSumo.Net
             {
                 IPHostEntry hostEntry = Dns.GetHostEntry(name);
                 string resolvedIP = hostEntry.AddressList[0].ToString();
-                this.deviceIp = resolvedIP;
+                this.deviceIp = resolvedIP;                
                 return Connect();
             }
             return false;            
@@ -228,7 +253,7 @@ namespace LibSumo.Net
 
                 // Set Video
                 this.video = new SumoVideo(this.receiver);
-                video.ImageInSeparateOpenCVWindow = EnableOpenCV;
+                video.ImageInSeparateOpenCVWindow = EnableOpenCVSeparatedWindow;
                 this.video.ImageAvailable += Display_ImageAvailable;
                 
                 // Run Threads
@@ -243,8 +268,7 @@ namespace LibSumo.Net
                     this.piloting.RunKeyboardThread();
                 }
 
-                EnableVideo();
-
+                EnableVideo();                
                 // Inform UI that is connected                
                 OnSumoEvents(new SumoEventArgs(SumoEnumCustom.TypeOfEvents.Connected, sumoInformations));
             }
@@ -281,6 +305,9 @@ namespace LibSumo.Net
                 if (this.audioPlayer != null)
                     this.audioPlayer.Disconnect();
             }
+
+            Ping_Should_run = true;
+            StartPingSupervisorThread();
         }
 
 
@@ -469,9 +496,10 @@ namespace LibSumo.Net
         }
 
         #region Accessory BOX
+       
+
         public void OpenBox()
-        {
-            // TODO : if connected
+        {            
             if (sumoInformations.IsCapapableOf(SumoInformations.Capability.Box))
             {
                 using (Socket sock = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp))
@@ -480,6 +508,26 @@ namespace LibSumo.Net
                     IPEndPoint endPoint = new IPEndPoint(serverAddr, 4567);
                     byte[] send_buffer = Encoding.ASCII.GetBytes("open\0");
                     sock.SendTo(send_buffer, endPoint);
+                    byte[] receive_buffer = new byte[100];
+                    try
+                    {
+                        sock.Receive(receive_buffer);
+                        var str = System.Text.Encoding.Default.GetString(receive_buffer).Trim('\0');
+                        if (str.Equals("opened"))
+                            OnSumoEvents(new SumoEventArgs(SumoEnumCustom.TypeOfEvents.BoxOpened, sumoInformations));
+                        else
+                        {
+                            sumoInformations.LastErrorStr = String.Format("received: {0} from box", str);
+                            OnSumoEvents(new SumoEventArgs(SumoEnumCustom.TypeOfEvents.BoxError, sumoInformations));
+                        }
+                    }
+                    catch (SocketException e)
+                    {
+                        int x = e.ErrorCode;
+                        sumoInformations.LastErrorStr = String.Format("received: error {0} from box", x);
+                        OnSumoEvents(new SumoEventArgs(SumoEnumCustom.TypeOfEvents.BoxError, sumoInformations));
+                    }
+                    
                 }
             }
         }
@@ -493,14 +541,28 @@ namespace LibSumo.Net
                 IPEndPoint endPoint = new IPEndPoint(serverAddr, 4567);
                 byte[] send_buffer = Encoding.ASCII.GetBytes("close\0");
                 sock.SendTo(send_buffer, endPoint);
+                byte[] receive_buffer = new byte[100];
+                try
+                {
+                    sock.Receive(receive_buffer);
+                    var str = System.Text.Encoding.Default.GetString(receive_buffer).Trim('\0');
+                    if (str.Equals("closeded"))
+                        OnSumoEvents(new SumoEventArgs(SumoEnumCustom.TypeOfEvents.BoxClosed, sumoInformations));
+                    else
+                    {
+                        sumoInformations.LastErrorStr = String.Format("received: {0} from box", str);
+                        OnSumoEvents(new SumoEventArgs(SumoEnumCustom.TypeOfEvents.BoxError, sumoInformations));
+                    }
+                }
+                catch (SocketException e)
+                {
+                    int x = e.ErrorCode;
+                    sumoInformations.LastErrorStr = String.Format("received: error {0} from box", x);
+                    OnSumoEvents(new SumoEventArgs(SumoEnumCustom.TypeOfEvents.BoxError, sumoInformations));
+                }
             }
         }
-
-        public void AddCapabilities(SumoInformations.Capability cap)
-        {            
-            sumoInformations.AddCapabilities(cap);
-        }
-
+      
         public void RemoveCapabilities(SumoInformations.Capability cap)
         {
             sumoInformations.RemoveCapabilities(cap);

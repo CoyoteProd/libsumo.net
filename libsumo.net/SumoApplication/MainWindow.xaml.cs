@@ -1,9 +1,4 @@
-﻿// Define this variable if you want Multi drone support
-// in this case, modify  prefixName and DNSString to your drones names (see Bookmark: DroneDNSName )
-// See https://github.com/CoyoteProd/Jumping-PEAP for more informations
-//#define MULTIPLEDRONES
-
-using System;
+﻿using System;
 using System.Windows;
 using System.IO;
 using System.Windows.Media;
@@ -46,12 +41,14 @@ namespace SumoApplication
         // Framerate calculation
         private double frameRate;
         private Stopwatch frameWatch;
-        Mat SplashImage;
 
-#if MULTIPLEDRONES
+        private Mat SplashImage;
+        private System.Windows.Controls.Image TempImage;
+
         // Multiple Drones        
-        private const string prefixName = "de-pmj0";
-        private const string DNSString = ".wifi.intranet.acme";
+        //private const string prefixName = "";
+        //private const string DNSString = "";
+        private bool MultipleDroneMode = false;
         List<MiniDevice> ListOfDevices;        
         class MiniDevice
         {
@@ -59,12 +56,13 @@ namespace SumoApplication
             public Button Button { get; set; }
             public int Id { get; set; }            
         }
-#endif
+
 
         public MainWindow()
         {
 
-            InitializeComponent();           
+            InitializeComponent();
+            sumoInformations = new SumoInformations();
 
             LOGGER.GetInstance.MessageAvailable += GetInstance_MessageAvailable;
             //LOGGER.GetInstance.MessageLevel = log4net.Core.Level.Debug;
@@ -77,46 +75,28 @@ namespace SumoApplication
             // Init Default UI
             panelJump.IsEnabled = false;
             panelSettings.IsEnabled = false;
-            image.IsEnabled = false;
-
-            // Set SplashImage
-            Assembly _assembly = Assembly.GetExecutingAssembly();                              
-            SplashImage = BitmapConverter.ToMat(new Bitmap(_assembly.GetManifestResourceStream("SumoApplication.Images.SplashScreen.jpg")));
-            
-            // add HUD logo on Splash Image for testing
-            Mat FinalImage = ImageManipulation.Decorate(SplashImage, new SumoInformations());
-            image.Source = FinalImage.ToWriteableBitmap();
+            //imgMain.IsEnabled = false;
+            SetSplashImage();
 
             InitDrone();
         }
 
+        private void SetSplashImage()
+        {
+            // Set SplashImage
+            Assembly _assembly = Assembly.GetExecutingAssembly();
+            SplashImage = BitmapConverter.ToMat(new Bitmap(_assembly.GetManifestResourceStream("SumoApplication.Images.SplashScreen.jpg")));
+
+            // add HUD logo on Splash Image for testing
+            Mat FinalImage = ImageManipulation.Decorate(SplashImage, sumoInformations);
+            imgMain.Source = FinalImage.ToWriteableBitmap();
+        }
 
         private void InitDrone()
         {
+            if(controller==null)
+                controller = new SumoController(out piloting);
 
-#if MULTIPLEDRONES
-            #region Multiple Drones
-            // Get IP of devices if you have multiples drone on the network            
-            ListOfDevices = new List<MiniDevice>();
-            for (int i = 1; i < 8; i++)
-            {
-                Button btn = new Button() { Content = "" };
-                btn.Visibility = Visibility.Hidden;
-                btn.Click += Btn_Click;
-                stckPanel.Children.Add(btn);
-                string hostname = prefixName + i.ToString() + DNSString;                
-                ListOfDevices.Add(new MiniDevice() { Name = hostname, Button = btn, Id = i });                
-            }
-
-            List<string> listOfName = new List<string>();
-            foreach(MiniDevice str in ListOfDevices) listOfName.Add(str.Name);
-            #endregion
-
-            // Create Controller
-            controller = new SumoController(out piloting, listOfName, true);
-#else
-            controller = new SumoController(out piloting);
-#endif
             controller.ImageAvailable += Controller_ImageAvailable;
             controller.SumoEvents += Controller_SumoEvents;
 
@@ -130,8 +110,8 @@ namespace SumoApplication
             //controller.EnableOpenCV = true;
             
         }
-#if MULTIPLEDRONES
-        private void Btn_Click(object sender, RoutedEventArgs e)
+
+        private void Btn_MultidronesConnectClick(object sender, RoutedEventArgs e)
         {
             // Get Btn Name
             string host = ((Button)sender).Content.ToString() + ".wifi.intranet.chuv";
@@ -139,15 +119,26 @@ namespace SumoApplication
             IPHostEntry hostIP = Dns.GetHostEntry(host);           
             controller.Connect(hostIP.AddressList[0].ToString());
         }
-#endif
+
         
         private void InitUI()
         {            
             panelJump.IsEnabled = sumoInformations.IsCapapableOf(SumoInformations.Capability.Jump);
             panelSettings.IsEnabled = true;
-            image.IsEnabled = true;
+            imgMain.IsEnabled = true;
 
             cbxWifiBand.ItemsSource = Enum.GetValues(typeof(SumoEnumGenerated.WifiSelection_band)).Cast<SumoEnumGenerated.WifiSelection_band>(); 
+
+            if(MultipleDroneMode)
+            {
+                btnConnect.Visibility = Visibility.Hidden;
+                btnEnableMultiDrones.Visibility = Visibility.Hidden;
+            }
+            else
+            {
+                btnConnect.Visibility = Visibility.Visible;
+                btnEnableMultiDrones.Visibility = Visibility.Visible;                
+            }
         }
 
 
@@ -162,9 +153,7 @@ namespace SumoApplication
         {
             controller.SetAudioDroneRX(true);
         }
-
-
-
+               
         #region Controller CallBack
         private void Controller_SumoEvents(object sender, SumoEventArgs e)
         {
@@ -177,40 +166,39 @@ namespace SumoApplication
                 case (SumoEnumCustom.TypeOfEvents.BatteryLevelEvent):                    
                     lblBatteryLevel.Dispatcher.BeginInvoke((Action)(() =>
                     {
-                        lblBatteryLevel.Content = sumoInformations.BatteryLevel + "%";
-                        
+                        lblBatteryLevel.Content = sumoInformations.BatteryLevel + "%";                        
                     }));
                     break;
-                case (SumoEnumCustom.TypeOfEvents.Connected):
-                    // Enable Btn
-                    InitUI();
-                    
+                case (SumoEnumCustom.TypeOfEvents.Connected):                    
+                    InitUI();                    // Enable Btn
                     break;
                 case (SumoEnumCustom.TypeOfEvents.Disconnected):
+                    InitUI();
+                    SetSplashImage();
                     break;
                 case (SumoEnumCustom.TypeOfEvents.Discovered):
 
                     txtBox.Dispatcher.BeginInvoke((Action)(() =>
                     {
-                        txtBox.AppendText(String.Format("Sumo {1} is available {0} ", Environment.NewLine, sumoInformations.DeviceName));
-                        txtBox.ScrollToEnd();
-
+                        LOGGER.GetInstance.Info(String.Format("Sumo {1} is available {0} ", Environment.NewLine, sumoInformations.DeviceName));                        
                     }));
-#if MULTIPLEDRONES
-                    // Get btn reference for multidrone And display it                
-                    try
+
+                    // Get btn reference for multipledrone And display it                
+                    if (ListOfDevices != null && ListOfDevices.Count > 0)
                     {
-                        MiniDevice d = ListOfDevices.Find(x => x.Name == sumoInformations.DeviceName);
-                        Button btn = d.Button;
-                        int suffixe = d.Id;
-                        btn.Dispatcher.BeginInvoke((Action)(() =>
+                        try
                         {
-                            btn.Content = prefixName + suffixe.ToString();
-                            btn.Visibility = Visibility.Visible;
-                        }));
-                    }
-                    catch { }
-#endif
+                            MiniDevice d = ListOfDevices.Find(x => x.Name == sumoInformations.DeviceName);
+                            Button btn = d.Button;
+                            int suffixe = d.Id;
+                            btn.Dispatcher.BeginInvoke((Action)(() =>
+                            {
+                                btn.Content = Properties.Settings.Default.prefixName + suffixe.ToString();
+                                btn.Visibility = Visibility.Visible;
+                            }));
+                        }
+                        catch { }
+                    }                                    
                     break;
                 case (SumoEnumCustom.TypeOfEvents.PilotingEvent):
                     break;
@@ -240,6 +228,7 @@ namespace SumoApplication
                         slVolume.Value = sumoInformations.Volume;
                     }));
                     break;
+
                 case (SumoEnumCustom.TypeOfEvents.CapabilitiesChange):
                     chkBox.Dispatcher.BeginInvoke((Action)(() =>
                     {
@@ -269,6 +258,33 @@ namespace SumoApplication
                     }));
                     break;
 
+                case (SumoEnumCustom.TypeOfEvents.CSTMSupervisorStarted):
+                    txtBox.Dispatcher.BeginInvoke((Action)(() =>
+                    {
+                        LOGGER.GetInstance.Info(String.Format("Multidrone Ping supervisor Started"));
+                        
+                    }));
+                    break;
+                case (SumoEnumCustom.TypeOfEvents.BoxError):
+                    txtBox.Dispatcher.BeginInvoke((Action)(() =>
+                    {
+                        LOGGER.GetInstance.Info(String.Format("{0}", sumoInformations.LastErrorStr));
+                        sumoInformations.LastErrorStr = "";
+                    }));
+                    
+                    break;
+                case (SumoEnumCustom.TypeOfEvents.BoxOpened):
+                    txtBox.Dispatcher.BeginInvoke((Action)(() =>
+                    {
+                        LOGGER.GetInstance.Info(String.Format("Box opened"));                        
+                    }));
+                    break;
+                case (SumoEnumCustom.TypeOfEvents.BoxClosed):
+                    txtBox.Dispatcher.BeginInvoke((Action)(() =>
+                    {
+                        LOGGER.GetInstance.Info(String.Format("Box closed"));
+                    }));
+                    break;
             }
           
         }
@@ -277,13 +293,13 @@ namespace SumoApplication
 
         private void Controller_ImageAvailable(object sender, ImageEventArgs e)
         {
-            image.Dispatcher.BeginInvoke((Action)(() =>
+            imgMain.Dispatcher.BeginInvoke((Action)(() =>
             {
                 DisplayFPS();
                 try
                 {
                     var FinalImage = ImageManipulation.Decorate(e.RawImage, sumoInformations);
-                    image.Source = FinalImage.ToWriteableBitmap(PixelFormats.Bgr24);                    
+                    imgMain.Source = FinalImage.ToWriteableBitmap(PixelFormats.Bgr24);                    
                 }
                 catch
                 {
@@ -396,19 +412,21 @@ namespace SumoApplication
             controller.Disconnect();
             panelJump.IsEnabled = false;
             panelSettings.IsEnabled = false;
-            image.IsEnabled = false;
+            imgMain.IsEnabled = false;
         }     
 #endregion
 
 #region UI
         private void BtnConnect_Click(object sender, RoutedEventArgs e)
-        {            
+        {
+            btnEnableMultiDrones.Visibility = Visibility.Hidden;
             controller.Connect();
             FakeTxtBox.Focus();
         }
         private void BtnDisconnect_Click(object sender, RoutedEventArgs e)
         {
             controller.Disconnect();
+            SetSplashImage();
             FakeTxtBox.Focus();
         }
 
@@ -527,8 +545,7 @@ namespace SumoApplication
         }
 
         private void ChkBowl_Unchecked(object sender, RoutedEventArgs e)
-        {
-            controller.AddCapabilities(SumoInformations.Capability.Jump);
+        {            
             InitUI();
             FakeTxtBox.Focus();
         }
@@ -539,7 +556,63 @@ namespace SumoApplication
             FakeTxtBox.Focus();
         }
 
-       
+        private void btnSimulate_Click(object sender, RoutedEventArgs e)
+        {
+            Simulate sim = new Simulate(ref imgMain, SplashImage, ref sumoInformations);
+            sim.Show();
+        }
+
+        private void btnRecordVideo_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void btnEnableMultiDrones_Click(object sender, RoutedEventArgs e)
+        {
+            #region Multiple Drones
+            
+            MultipleDroneMode = true;
+            // Get IP of devices if you have multiples drone on the network            
+            ListOfDevices = new List<MiniDevice>();
+            for (int i = 1; i < 8; i++)
+            {
+                Button btn = new Button() { Content = "" };
+                btn.Visibility = Visibility.Hidden;
+                btn.Click += Btn_MultidronesConnectClick;
+                stckPanel1.Children.Add(btn);
+                string hostname = Properties.Settings.Default.prefixName + i.ToString() + Properties.Settings.Default.DNSString;
+                ListOfDevices.Add(new MiniDevice() { Name = hostname, Button = btn, Id = i });
+            }
+
+            List<string> listOfName = new List<string>();
+            foreach (MiniDevice str in ListOfDevices) listOfName.Add(str.Name);
+
+            // Create Controller
+            controller = new SumoController(out piloting, listOfName, true);
+            InitDrone();
+            InitUI();
+            #endregion
+        }
+
+
+        private void ImgMain_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (e.ClickCount == 2)
+            {   // FulScreen
+                FullScreen fls = new FullScreen();
+                // Save image context
+                this.TempImage = this.imgMain;
+                // Set new image target
+                this.imgMain = fls.imgMain;
+                SetSplashImage();                
+                this.Visibility = Visibility.Hidden;
+                fls.ShowDialog();
+
+                // restaure image context
+                this.Visibility = Visibility.Visible;
+                this.imgMain = this.TempImage;
+            }
+        }
     }     
 
 }
